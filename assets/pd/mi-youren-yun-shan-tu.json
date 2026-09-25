@@ -1,0 +1,43 @@
+{
+ "objectID": "113945",
+ "accessionNumber": "1933.220",
+ "title": "Cloudy Mountains",
+ "titleInOriginalLanguage": "雲山圖",
+ "artistDisplayName": "Mi Youren (Chinese, 1072–1151)",
+ "artistNameInChinese": "米友仁",
+ "objectDate": "1130",
+ "medium": "Handscroll; ink and color on silk",
+ "dimensions": "Image: 43.7 x 192.6 cm (17 3/16 x 75 13/16 in.); Overall: 45.5 x 646.8 cm (17 15/16 x 254 5/8 in.)",
+ "culture": "China, Southern Song dynasty (1127–1279)",
+ "classification": "Painting",
+ "creditLine": "Purchase from the J. H. Wade Fund",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1933.220/1933.220_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1933.220",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1933.220/1933.220_web.jpg",
+ "note": "米友仁《云山图》水墨长卷（已裁去卷首题跋与藏印，只留画心及画上自题）。横向约 4.5:1，烟云流润、大片留白，最适合做「远山雾气」主背景层。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   605
+  ],
+  "cropFraction": [
+   0.256,
+   0.03,
+   0.972,
+   0.98
+  ],
+  "pixelsAfterCrop": [
+   2434,
+   574
+  ],
+  "outputPixels": [
+   2000,
+   472
+  ],
+  "jpg": "quality 85, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

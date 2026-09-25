@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>诗册 · 悬浮古籍</title>
+<link rel="stylesheet" href="css/site.css">
+<style>
+  html, body { overflow: hidden; height: 100%; }
+  body {
+    background:
+      radial-gradient(78% 62% at 50% 43%, #31261a 0%, #1d1712 38%, #0d0b09 72%, #070606 100%);
+  }
+  #stage { position: fixed; inset: 0; z-index: 1; }
+  #stage canvas { display: block; touch-action: none; }
+
+  /* 书后的一团光晕，让"悬浮"有落点 */
+  .halo {
+    position: fixed; left: 50%; top: 50%; z-index: 0; pointer-events: none;
+    width: min(112vh, 105vw); height: min(112vh, 105vw);
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle at 50% 50%,
+      rgba(255,214,150,.15) 0%, rgba(240,190,120,.09) 26%,
+      rgba(180,130,70,.045) 48%, rgba(0,0,0,0) 72%);
+    filter: blur(12px);
+  }
+  .halo::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,240,210,.10) 0%, rgba(0,0,0,0) 40%);
+  }
+
+  /* ---- 左侧竖排书名 ---- */
+  #vtitle {
+    left: 34px; top: 50%; transform: translateY(-50%);
+    writing-mode: vertical-rl; text-orientation: upright;
+    display: flex; align-items: flex-start; gap: 15px; pointer-events: none;
+    font-size: 20px; letter-spacing: .32em; color: var(--text);
+    text-shadow: 0 2px 20px rgba(0,0,0,.95);
+  }
+  #vtitle .au { font-size: 12.5px; letter-spacing: .3em; color: var(--text-faint); margin-top: 8px; }
+  #vtitle .rule { width: 1px; height: 48px; background: linear-gradient(180deg, var(--gold-dim), transparent); margin-top: 6px; }
+
+  /* ---- 右下角小开关 ---- */
+  #corner { right: 30px; bottom: 34px; z-index: 12; display: flex; gap: 20px; }
+  #corner button {
+    font-family: var(--serif); cursor: pointer; color: var(--text-faint);
+    background: none; border: 0; padding: 4px 0; font-size: 12.5px; letter-spacing: .24em;
+    border-bottom: 1px solid transparent; transition: .24s;
+  }
+  #corner button:hover { color: var(--gold); border-bottom-color: var(--gold-dim); }
+  #corner button.off { opacity: .45; }
+
+  /* ---- 展卷牌（左下）---- */
+  #plaque {
+    left: 30px; bottom: 30px; max-width: 42vw; pointer-events: none;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  #plaque-title {
+    font-size: 25px; letter-spacing: .26em; color: var(--text); padding-left: .26em;
+    text-shadow: 0 2px 22px rgba(0,0,0,.95);
+    transition: opacity .3s;
+  }
+  #plaque-sub {
+    font-size: 12px; letter-spacing: .22em; color: var(--text-dim);
+    display: flex; align-items: center; gap: 10px;
+  }
+  #plaque-sub::before {
+    content: ''; display: block; width: 26px; height: 1px;
+    background: linear-gradient(90deg, var(--gold-dim), transparent);
+  }
+
+  /* ---- 页码签（右侧竖排竹简）---- */
+  #ticks {
+    right: 26px; top: 50%; transform: translateY(-50%); z-index: 12;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    padding: 10px 0;
+  }
+  .tick {
+    width: 14px; height: 2px; padding: 0; border: 0; border-radius: 1px; cursor: pointer;
+    background: rgba(232,220,192,.16); transition: width .26s, background .26s;
+  }
+  .tick:hover { width: 24px; background: rgba(232,220,192,.5); }
+  .tick.on { width: 22px; background: linear-gradient(90deg, rgba(200,168,106,.5), var(--gold)); }
+
+  /* ---- 底部细字控件（无药丸）---- */
+  #dock {
+    left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 12;
+    display: flex; align-items: center; font-size: 13.5px; letter-spacing: .2em;
+  }
+  #dock button {
+    position: relative; font-family: var(--serif); cursor: pointer; color: var(--text-dim);
+    background: none; border: 0; padding: 6px 17px; font-size: 13.5px; letter-spacing: .2em;
+    transition: color .24s;
+  }
+  #dock button + button::before {
+    content: ''; position: absolute; left: 0; top: 50%; width: 1px; height: 11px;
+    margin-top: -5.5px; background: rgba(200,168,106,.22);
+  }
+  #dock button:hover:not(:disabled) { color: #f3e6c8; }
+  #dock button:disabled { opacity: .22; cursor: default; }
+  #dock button.primary { color: var(--gold); }
+  #counter { font-size: 12px; letter-spacing: .22em; color: var(--text-faint);
+    padding-left: 17px; border-left: 1px solid rgba(200,168,106,.22); margin-left: 4px; }
+
+  /* ---- 提示（会自己隐去）---- */
+  #hint {
+    left: 50%; bottom: 82px; transform: translateX(-50%); z-index: 11;
+    font-size: 12.5px; letter-spacing: .3em; color: rgba(232,220,192,.42);
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .5s;
+  }
+  #hint.show { opacity: 1; }
+
+  /* ---- 装帧页 ---- */
+  #loader {
+    position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 20px;
+    background: radial-gradient(70% 60% at 50% 45%, #171310, #080706 80%);
+    transition: opacity .9s ease;
+  }
+  #loader.done { opacity: 0; pointer-events: none; }
+  .seal {
+    width: 62px; height: 62px; border: 1.5px solid rgba(168,51,43,.8); color: #c0564b;
+    display: flex; align-items: center; justify-content: center; font-size: 18px; letter-spacing: .06em;
+    background: rgba(168,51,43,.08); border-radius: 3px; animation: breathe 2.8s ease-in-out infinite;
+  }
+  @keyframes breathe { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+  #loader-msg { font-size: 12.5px; letter-spacing: .34em; color: var(--text-dim); }
+  .bar { width: 200px; height: 1px; background: rgba(232,220,192,.13); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, rgba(200,168,106,.35), var(--gold)); transition: width .3s ease; }
+  #loader-pct { font-size: 11px; letter-spacing: .22em; color: rgba(232,220,192,.3); }
+
+  @media (max-width: 860px) {
+    #plaque { left: 16px; bottom: 96px; max-width: 70vw; }
+    #plaque-title { font-size: 19px; }
+    #ticks { right: 12px; gap: 5px; }
+    .tick { width: 11px; }
+    .tick.on { width: 17px; }
+    #dock { bottom: 22px; gap: 2px; }
+    #dock button { padding: 7px 9px; font-size: 12.5px; letter-spacing: .1em; }
+    #counter { min-width: 92px; font-size: 11px; }
+    #vtitle { display: none; }
+    #corner { right: 16px; bottom: 26px; gap: 13px; }
+    #corner button { font-size: 11.5px; letter-spacing: .16em; }
+    #counter { display: none; }
+    #hint { font-size: 11px; letter-spacing: .18em; bottom: 64px; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg">
+    <div class="bg-layer far"></div>
+    <div class="bg-layer mid"></div>
+    <div class="bg-layer mistimg"></div>
+    <div class="mist"></div>
+  </div>
+  <div class="halo"></div>
+
+  <div id="stage"></div>
+  <div class="frame"></div>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+
+  <nav class="nav">
+    <div class="nav-brand">
+      <a class="nav-title" id="brand-title" href="index.html">〇〇〇〇〇</a>
+      <div class="nav-sub" id="brand-sub">〇 卷 〇 · 〇〇〇·著</div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="on">诗册</a>
+      <a href="poems.html">诗集</a>
+      <a href="poems.html#about">关于</a>
+    </div>
+  </nav>
+
+  <div id="vtitle" class="ui">
+    <span id="vtitle-main">〇〇〇〇〇</span>
+    <span class="rule"></span>
+    <span class="au" id="vtitle-au"></span>
+  </div>
+
+  <div id="ticks" class="ui"></div>
+
+  <div id="plaque" class="ui">
+    <div id="plaque-title">〇〇〇〇〇</div>
+    <div id="plaque-sub"></div>
+  </div>
+
+  <div id="hint" class="ui"></div>
+
+  <div id="dock" class="ui">
+    <button id="btn-prev" title="上一叶（←）">‹ 上一叶</button>
+    <button id="btn-latest" class="primary" title="扬至最新一首（End）">扬至最新</button>
+    <button id="btn-next" title="下一叶（→）">下一叶 ›</button>
+    <span id="counter">合　册</span>
+  </div>
+
+  <div id="corner" class="ui">
+    <button id="btn-pose" title="立起／平放（F）">立起</button>
+    <button id="btn-sound" title="翻页声（合成音）" aria-pressed="true">声</button>
+  </div>
+
+  <div id="loader">
+    <div class="seal">装帧</div>
+    <div id="loader-msg">正在装帧…</div>
+    <div class="bar"><i id="loader-bar"></i></div>
+    <div id="loader-pct">0%</div>
+  </div>
+
+  <script src="libs/three.min.js"></script>
+  <script src="content.js"></script>
+  <script src="js/textures.js"></script>
+  <script src="js/lunar.js"></script>
+  <script src="js/typeset.js"></script>
+  <script src="js/book.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

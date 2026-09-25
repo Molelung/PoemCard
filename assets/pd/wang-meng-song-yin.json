@@ -1,0 +1,43 @@
+{
+ "objectID": "160136",
+ "accessionNumber": "1997.94",
+ "title": "Writing Books under the Pine Trees",
+ "titleInOriginalLanguage": "松下著書圖",
+ "artistDisplayName": "Wang Meng (Chinese, c. 1308–1385)",
+ "artistNameInChinese": "王蒙",
+ "objectDate": "c. 1308–85",
+ "medium": "Album leaf; ink and color on paper",
+ "dimensions": "Painting: 39.8 x 56.9 cm (15 11/16 x 22 3/8 in.); Overall: 67.6 x 71.4 cm (26 5/8 x 28 1/8 in.)",
+ "culture": "China, Yuan dynasty (1271–1368)",
+ "classification": "Painting",
+ "creditLine": "Bequest of Mrs. A. Dean Perry",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1997.94/1997.94_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1997.94",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1997.94/1997.94_web.jpg",
+ "note": "元 王蒙《松阴著书》。解索皴山石质感强烈、草木蓊郁，适合做「近景山石」层。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   2390
+  ],
+  "cropFraction": [
+   0.008,
+   0.01,
+   0.993,
+   0.994
+  ],
+  "pixelsAfterCrop": [
+   3349,
+   2352
+  ],
+  "outputPixels": [
+   2000,
+   1405
+  ],
+  "jpg": "quality 67, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

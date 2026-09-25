@@ -1,0 +1,43 @@
+{
+ "objectID": "159091",
+ "accessionNumber": "1995.288",
+ "title": "Mirror with Clouds and Nebulae",
+ "titleInOriginalLanguage": "星雲鏡",
+ "artistDisplayName": "Unidentified artist",
+ "artistNameInChinese": "",
+ "objectDate": "200–100 BCE",
+ "medium": "bronze",
+ "dimensions": "Diameter: 10 cm (3 15/16 in.); Overall: 1.2 cm (1/2 in.); Rim: 0.4 cm (3/16 in.)",
+ "culture": "China, Western Han dynasty (206 BCE–8 CE)",
+ "classification": "Metalwork",
+ "creditLine": "Gift of Drs. Thomas and Martha Carter in Honor of Sherman E. Lee",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1995.288/1995.288_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1995.288",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1995.288/1995.288_web.jpg",
+ "note": "西汉 星云纹铜镜（200–100 BCE，已裁为居中方形）。同心星云纹，适合做圆形「云纹」徽记、光盘/暗角装饰；底色深灰，建议配 lighten/screen 混合或做圆形遮罩。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   3184
+  ],
+  "cropFraction": [
+   0.167,
+   0.144,
+   0.843,
+   0.866
+  ],
+  "pixelsAfterCrop": [
+   2299,
+   2299
+  ],
+  "outputPixels": [
+   1200,
+   1200
+  ],
+  "jpg": "quality 85, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

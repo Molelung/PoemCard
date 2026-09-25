@@ -1,0 +1,43 @@
+{
+ "objectID": "100264",
+ "accessionNumber": "1919.76",
+ "title": "Rubbing of a Stone from the Tang-Fang Collection",
+ "titleInOriginalLanguage": "仿東漢武梁祠畫像石拓片",
+ "artistDisplayName": "Unidentified artist",
+ "artistNameInChinese": "",
+ "objectDate": "1900–1916",
+ "medium": "Rubbing, ink on paper",
+ "dimensions": "Overall: 78.7 x 174 cm (31 x 68 1/2 in.); Rubbing only: 64.1 x 123.2 cm (25 1/4 x 48 1/2 in.)",
+ "culture": "China, Qing dynasty (1644-1911) or Republican period (1912-49)",
+ "classification": "Miscellaneous",
+ "creditLine": "Gift of Yamanaka & Company",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1919.76/1919.76_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1919.76",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1919.76/1919.76_web.jpg",
+ "note": "东汉武梁祠画像石拓本（民国拓，已裁去摄影黑底）。黑白平面、拓痕清晰，最适合做整页「宣纸/墨拓」底纹叠加（正片叠底或 overlay）。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   1927
+  ],
+  "cropFraction": [
+   0.031,
+   0.058,
+   0.981,
+   0.927
+  ],
+  "pixelsAfterCrop": [
+   3230,
+   1675
+  ],
+  "outputPixels": [
+   1200,
+   622
+  ],
+  "jpg": "quality 85, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

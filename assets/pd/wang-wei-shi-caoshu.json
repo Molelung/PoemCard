@@ -1,0 +1,43 @@
+{
+ "objectID": "136951",
+ "accessionNumber": "1961.421.2",
+ "title": "Poem by Wang Wei in the Cursive Script Style",
+ "titleInOriginalLanguage": "王維詩",
+ "artistDisplayName": "Song Lizong (Chinese, 1205–1264)",
+ "artistNameInChinese": "宋理宗",
+ "objectDate": "1256",
+ "medium": "Album leaf; ink on silk",
+ "dimensions": "Image: 25.1 x 25.3 cm (9 7/8 x 9 15/16 in.); with mat: 33.3 x 40.5 cm (13 1/8 x 15 15/16 in.)",
+ "culture": "China, Southern Song dynasty (1127-1279)",
+ "classification": "Calligraphy",
+ "creditLine": "John L. Severance Fund",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1961.421.2/1961.421.2_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1961.421.2",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1961.421.2/1961.421.2_web.jpg",
+ "note": "南宋理宗（1256）书王维《终南别业》句「行到水穷处，坐看云起时」，行草团扇（已裁去外框留白）。团扇形制＋御书朱印，最适合做站点 logo、印章与题字参考。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   2807
+  ],
+  "cropFraction": [
+   0.095,
+   0.095,
+   0.905,
+   0.885
+  ],
+  "pixelsAfterCrop": [
+   2754,
+   2218
+  ],
+  "outputPixels": [
+   2000,
+   1611
+  ],
+  "jpg": "quality 85, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

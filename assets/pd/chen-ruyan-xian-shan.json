@@ -1,0 +1,43 @@
+{
+ "objectID": "160137",
+ "accessionNumber": "1997.95",
+ "title": "Mountains of the Immortals",
+ "titleInOriginalLanguage": "仙山圖",
+ "artistDisplayName": "Chen Ruyan (Chinese, c. 1331–1371)",
+ "artistNameInChinese": "陳汝言",
+ "objectDate": "1300–1370",
+ "medium": "Handscroll; ink and color on silk",
+ "dimensions": "Painting only: 33.4 x 97.3 cm (13 1/8 x 38 5/16 in.); height: 35 cm (13 3/4 in.)",
+ "culture": "China, Yuan dynasty (1271-1368)",
+ "classification": "Painting",
+ "creditLine": "Bequest of Mrs. A. Dean Perry",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1997.95/1997.95_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1997.95",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1997.95/1997.95_web.jpg",
+ "note": "元 陈汝言《仙山图》青绿长卷（已裁去上下镶边）。横向约 3.6:1，峰峦云气分明，适合做「中景山峦」层。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   931
+  ],
+  "cropFraction": [
+   0.053,
+   0.022,
+   0.872,
+   0.978
+  ],
+  "pixelsAfterCrop": [
+   2784,
+   890
+  ],
+  "outputPixels": [
+   2000,
+   639
+  ],
+  "jpg": "quality 85, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

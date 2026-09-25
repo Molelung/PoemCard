@@ -1,0 +1,43 @@
+{
+ "objectID": "160290",
+ "accessionNumber": "1998.169",
+ "title": "Poem on Imperial Gift of an Embroidered Silk: Calligraphy in Running-Standard Script (xingkaishu)",
+ "titleInOriginalLanguage": "行楷 書",
+ "artistDisplayName": "Wen Zhengming (Chinese, 1470–1559)",
+ "artistNameInChinese": "文徵明",
+ "objectDate": "c. 1525",
+ "medium": "Hanging scroll; ink on paper",
+ "dimensions": "calligraphy: 343.5 x 93.3 cm (135 1/4 x 36 3/4 in.); Overall with knobs: 446 x 125 cm (175 9/16 x 49 3/16 in.)",
+ "culture": "China, Suzhou, Ming dynasty (1368-1644)",
+ "classification": "Calligraphy",
+ "creditLine": "John L. Severance Fund",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1998.169/1998.169_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1998.169",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1998.169/1998.169_web.jpg",
+ "note": "明 文徵明《赐衣诗》行楷书竖条幅（c.1525，已裁去外框）。楷法精严，可做题字正文、竖排标题与印章旁的书法参考。",
+ "processed": {
+  "sourcePixels": [
+   1009,
+   3400
+  ],
+  "cropFraction": [
+   0.062,
+   0.018,
+   0.925,
+   0.96
+  ],
+  "pixelsAfterCrop": [
+   871,
+   3203
+  ],
+  "outputPixels": [
+   489,
+   1798
+  ],
+  "jpg": "quality 85, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

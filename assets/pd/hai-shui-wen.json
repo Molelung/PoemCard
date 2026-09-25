@@ -1,0 +1,43 @@
+{
+ "objectID": "149955",
+ "accessionNumber": "1980.186",
+ "title": "Vase (Meiping) with Waves",
+ "titleInOriginalLanguage": "吉州窯水波紋梅瓶",
+ "artistDisplayName": "Unidentified artist",
+ "artistNameInChinese": "",
+ "objectDate": "1200s–1300s",
+ "medium": "glazed stoneware with slip painted decoration, Jizhou ware",
+ "dimensions": "Diameter: 16.7 cm (6 9/16 in.); Overall: 26.3 cm (10 3/8 in.)",
+ "culture": "China, Jiangxi Province, Yonghezhen, Yuan dynasty (1271–1368)",
+ "classification": "Ceramic",
+ "creditLine": "Gifts of J. H. Wade and Mr. and Mrs. J. H. Wade; and purchase from the J. H. Wade Fund by exchange",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1980.186/1980.186_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1980.186",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1980.186/1980.186_web.jpg",
+ "note": "南宋–元 吉州窑水波纹梅瓶（已裁取瓶身纹样局部，画面内无背景）。密集白描波浪纹，最适合做「水波纹」叠加纹理、页脚水纹带与水墨过渡。",
+ "processed": {
+  "sourcePixels": [
+   2535,
+   3400
+  ],
+  "cropFraction": [
+   0.2,
+   0.22,
+   0.8,
+   0.64
+  ],
+  "pixelsAfterCrop": [
+   1521,
+   1428
+  ],
+  "outputPixels": [
+   1200,
+   1127
+  ],
+  "jpg": "quality 85, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

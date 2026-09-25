@@ -1,0 +1,43 @@
+{
+ "objectID": "160127",
+ "accessionNumber": "1997.88",
+ "title": "Watching the Deer by a Pine Shaded Stream",
+ "titleInOriginalLanguage": "松溪觀鹿圖",
+ "artistDisplayName": "Ma Yuan (Chinese, c. 1150–after 1255)",
+ "artistNameInChinese": "馬遠",
+ "objectDate": "1127–1279",
+ "medium": "Album leaf; ink and light color on silk",
+ "dimensions": "Overall: 33.7 x 39.3 cm (13 1/4 x 15 1/2 in.); with cover: 67.5 x 39.3 cm (26 9/16 x 15 1/2 in.)",
+ "culture": "China, Southern Song dynasty (1127-1279)",
+ "classification": "Painting",
+ "creditLine": "Bequest of Mrs. A. Dean Perry",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1997.88/1997.88_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1997.88",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1997.88/1997.88_web.jpg",
+ "note": "南宋 马远《松下观鹿》（已裁去装裱边）。「一角」式构图，松石坡岸笔法劲健，最适合做「近景树石」层。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   3172
+  ],
+  "cropFraction": [
+   0.032,
+   0.038,
+   0.978,
+   0.978
+  ],
+  "pixelsAfterCrop": [
+   3217,
+   2982
+  ],
+  "outputPixels": [
+   2000,
+   1854
+  ],
+  "jpg": "quality 73, optimize, progressive, pre-blur 0.85px",
+  "webp": "quality 80, method 6"
+ }
+}

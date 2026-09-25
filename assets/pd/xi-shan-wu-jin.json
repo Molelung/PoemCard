@@ -1,0 +1,43 @@
+{
+ "objectID": "130361",
+ "accessionNumber": "1953.126",
+ "title": "Streams and Mountains without End",
+ "titleInOriginalLanguage": "溪山無盡",
+ "artistDisplayName": "Unidentified artist",
+ "artistNameInChinese": "",
+ "objectDate": "1100–1150",
+ "medium": "handscroll; ink and slight color on silk",
+ "dimensions": "Image: 35.1 x 213 cm (13 13/16 x 83 7/8 in.); Overall: 35.1 x 1103.8 cm (13 13/16 x 434 9/16 in.)",
+ "culture": "China, late Northern Song dynasty (960-1127) - Jin dynasty (1115-1234)",
+ "classification": "Painting",
+ "creditLine": "Gift of the Hanna Fund",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1953.126/1953.126_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1953.126",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1953.126/1953.126_web.jpg",
+ "note": "北宋无款《溪山无尽》长卷（已裁去两端隔水/题签）。横向约 6.4:1，群山连绵、江天空阔，适合做超宽「远山」滚动层与天际线。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   525
+  ],
+  "cropFraction": [
+   0.06,
+   0.025,
+   0.963,
+   0.965
+  ],
+  "pixelsAfterCrop": [
+   3070,
+   493
+  ],
+  "outputPixels": [
+   2000,
+   321
+  ],
+  "jpg": "quality 85, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "objectID": "139830",
+ "accessionNumber": "1963.588",
+ "title": "Cottages in a Misty Grove in Autumn",
+ "titleInOriginalLanguage": "煙村秋霭圖",
+ "artistDisplayName": "Li Anzhong (Chinese, active first half of the 1100s)",
+ "artistNameInChinese": "李安忠",
+ "objectDate": "1117",
+ "medium": "Album leaf; ink and color on silk",
+ "dimensions": "Overall: 24.2 x 26.3 cm (9 1/2 x 10 3/8 in.)",
+ "culture": "China, Northern Song dynasty (960-1127)",
+ "classification": "Painting",
+ "creditLine": "Gift of Mr. and Mrs. Severance A. Millikin",
+ "isPublicDomain": true,
+ "license": "Public Domain / CC0 1.0 Universal (Cleveland Museum of Art Open Access)",
+ "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+ "sourceURL": "https://openaccess-cdn.clevelandart.org/1963.588/1963.588_print.jpg",
+ "objectURL": "https://clevelandart.org/art/1963.588",
+ "primaryImageSmall": "https://openaccess-cdn.clevelandart.org/1963.588/1963.588_web.jpg",
+ "note": "北宋 李安忠《秋山暮霭》（已裁去大面积白色装裱挖嵌，仅留画心）。林间雾气弥漫、留白充足，适合做「雾气/树林」过渡层。",
+ "processed": {
+  "sourcePixels": [
+   3400,
+   2829
+  ],
+  "cropFraction": [
+   0.18,
+   0.148,
+   0.817,
+   0.854
+  ],
+  "pixelsAfterCrop": [
+   2165,
+   1997
+  ],
+  "outputPixels": [
+   2000,
+   1845
+  ],
+  "jpg": "quality 73, optimize, progressive, pre-blur 0.6px",
+  "webp": "quality 80, method 6"
+ }
+}
