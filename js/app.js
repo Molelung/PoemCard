@@ -473,6 +473,11 @@
     if (ui.tapPrev) ui.tapPrev.addEventListener('click', () => doFlip(-1));
     if (ui.tapNext) ui.tapNext.addEventListener('click', () => doFlip(1));
 
+    ui.btnReset = $('#btn-reset');
+    ui.mBtnReset = $('#m-btn-reset');
+    ui.mBtnPose = $('#m-btn-pose');
+    ui.mPoseTxt = $('#m-pose-txt');
+
     const toggleSound = () => {
       Sfx.on = !Sfx.on;
       if (ui.btnSound) {
@@ -491,8 +496,57 @@
       lastInteract = performance.now();
     };
 
+    const resetView = (animated = true) => {
+      const isMob = isMobile || window.innerWidth < 800;
+      const targetAz = isMob ? 0.08 : 0.36;
+      const targetPol = isMob ? 1.38 : 1.16;
+      const targetZoom = 1;
+
+      if (animated) {
+        const startAz = view.az, startPol = view.pol, startZoom = view.zoom;
+        const startPanX = view.pan.x, startPanY = view.pan.y;
+        view.vAz = 0; view.vPol = 0;
+        view.poseT = 1; // 恢复立册
+        const t0 = performance.now();
+        const dur = 450;
+        function animStep(now) {
+          const p = Math.min(1, (now - t0) / dur);
+          const ease = 0.5 - 0.5 * Math.cos(p * Math.PI);
+          view.az = startAz + (targetAz - startAz) * ease;
+          view.pol = startPol + (targetPol - startPol) * ease;
+          view.zoom = startZoom + (targetZoom - startZoom) * ease;
+          view.pan.x = startPanX * (1 - ease);
+          view.pan.y = startPanY * (1 - ease);
+          if (p < 1) {
+            requestAnimationFrame(animStep);
+          } else {
+            view.az = targetAz;
+            view.pol = targetPol;
+            view.zoom = targetZoom;
+            view.pan.set(0, 0, 0);
+          }
+          syncUI();
+        }
+        requestAnimationFrame(animStep);
+      } else {
+        view.az = targetAz; view.pol = targetPol; view.zoom = targetZoom; view.vAz = 0; view.vPol = 0;
+        view.pan.set(0, 0, 0);
+        view.pose = 1; view.poseT = 1;
+        if (book) book.group.rotation.x = 1.44;
+        syncUI();
+      }
+      showHint('视角归正 · 立册居中', 1800);
+      lastInteract = performance.now();
+    };
+
     if (ui.btnSound) ui.btnSound.addEventListener('click', toggleSound);
     if (ui.btnPose) ui.btnPose.addEventListener('click', togglePose);
+    if (ui.btnReset) ui.btnReset.addEventListener('click', () => resetView(true));
+    if (ui.mBtnReset) ui.mBtnReset.addEventListener('click', () => resetView(true));
+    if (ui.mBtnPose) ui.mBtnPose.addEventListener('click', togglePose);
+
+    window._appResetView = resetView;
+    window._appTogglePose = togglePose;
 
     syncUI();
   }
@@ -550,6 +604,7 @@
     if (ui.btnPrev) ui.btnPrev.disabled = book.cursor <= 0;
     if (ui.btnNext) ui.btnNext.disabled = book.cursor >= book.N + 1;
     if (ui.btnPose) ui.btnPose.textContent = view.poseT ? '伏案' : '立册';
+    if (ui.mPoseTxt) ui.mPoseTxt.textContent = view.poseT ? '伏案' : '立册';
 
     if (ui.btnLatest) {
       const p = newestPage();
@@ -590,29 +645,33 @@
       Sfx.boot();
       if (Sfx.ctx && Sfx.ctx.state === 'suspended') Sfx.ctx.resume();
 
+      pointer.down = true;
+      pointer.x0 = e.clientX; pointer.y0 = e.clientY;
+      pointer.lx = e.clientX; pointer.ly = e.clientY;
+      pointer.lt = performance.now();
+      pointer.lt0 = performance.now();
+      pointer.moved = 0; pointer.vel = 0; pointer.item = null; pointer.hitItem = null;
+      pointer.az0 = view.az; pointer.pol0 = view.pol;
+      pointer.pan0 = view.pan.clone();
+      view.vAz = 0; view.vPol = 0;
+
       if (e.pointerType === 'touch') {
         pointer.isTouch = true;
-        pointer.down = true;
-        pointer.x0 = e.clientX; pointer.y0 = e.clientY;
-        pointer.lx = e.clientX; pointer.ly = e.clientY;
-        pointer.lt = performance.now();
-        pointer.moved = 0;
+        // 移动端触控：默认为自由旋转视角（Orbit），兼顾点击判定
+        pointer.mode = 'orbit';
+        const hit = pickAt(e.clientX, e.clientY);
+        pointer.hitItem = hit && hit.item ? hit.item : null;
+        pointer.dir = hit ? hit.dir : 0;
         return;
       }
 
       pointer.isTouch = false;
       try { el.setPointerCapture(e.pointerId); } catch (_) {}
-      pointer.down = true;
-      pointer.x0 = e.clientX; pointer.y0 = e.clientY;
-      pointer.lx = e.clientX; pointer.ly = e.clientY; pointer.lt = performance.now();
-      pointer.moved = 0; pointer.vel = 0; pointer.item = null; pointer.hitItem = null;
 
       const wantPan = e.button === 2 || e.altKey;
       const hit = wantPan ? null : pickAt(e.clientX, e.clientY);
       if (wantPan) {
         pointer.mode = 'pan';
-        pointer.pan0 = view.pan.clone();
-        pointer.az0 = view.az; pointer.pol0 = view.pol;
       } else if (hit && hit.type === 'item' && hit.edge) {
         pointer.mode = 'flip';
         pointer.item = hit.item;
@@ -624,8 +683,6 @@
         pointer.mode = hit && hit.type === 'block' ? 'blockClick' : (hit && hit.type === 'item' ? 'clickOnly' : 'orbit');
         pointer.dir = hit ? hit.dir : 0;
         pointer.hitItem = hit && hit.item ? hit.item : null;
-        pointer.az0 = view.az; pointer.pol0 = view.pol;
-        view.vAz = 0; view.vPol = 0;
       }
       el.style.cursor = 'grabbing';
     });
@@ -635,20 +692,11 @@
       const dt = Math.max(8, now - pointer.lt) / 1000;
       pointer.lt = now;
 
-      if (e.pointerType === 'touch' || pointer.isTouch) {
-        if (pointer.down) {
-          const dx = e.clientX - pointer.lx, dy = e.clientY - pointer.ly;
-          pointer.lx = e.clientX; pointer.ly = e.clientY;
-          pointer.moved += Math.abs(dx) + Math.abs(dy);
-          if (pointer.moved > 10 && ui.hint) ui.hint.classList.remove('show');
-        }
-        return;
-      }
-
       if (pointer.down) {
         const dx = e.clientX - pointer.lx, dy = e.clientY - pointer.ly;
         pointer.lx = e.clientX; pointer.ly = e.clientY;
         pointer.moved += Math.abs(dx) + Math.abs(dy);
+
         if (pointer.mode === 'flip') {
           pointer.vel = pointer.vel * 0.6 + ((-dx / pointer.gain) / dt) * 0.4;
           book.dragTo(pointer.item, pointer.p0 - (e.clientX - pointer.x0) / pointer.gain, true);
@@ -657,10 +705,10 @@
           const scale = (fitDistance() * view.zoom) / renderer.domElement.clientHeight * 1.6;
           view.pan.x = pointer.pan0.x - (e.clientX - pointer.x0) * scale;
           view.pan.y = pointer.pan0.y + (e.clientY - pointer.y0) * scale;
-          view.vAz = view.vPol = 0;
+          view.vAz = 0; view.vPol = 0;
         } else {
-          // 自由旋转：上下左右随便转，松手带惯性
-          const k = 0.0078;
+          // 自由旋转视角：移动端与PC端均支持360度顺滑环顾旋转，松手带惯性
+          const k = pointer.isTouch ? 0.0068 : 0.0078;
           const nAz = pointer.az0 - (e.clientX - pointer.x0) * k;
           const nPol = clamp(pointer.pol0 - (e.clientY - pointer.y0) * k, 0.055, Math.PI - 0.055);
           view.vAz = (nAz - view.az) / dt * 0.45 + view.vAz * 0.55;
@@ -670,14 +718,16 @@
         }
         if (pointer.moved > 10 && ui.hint) ui.hint.classList.remove('show');
       } else {
-        const hit = pickAt(e.clientX, e.clientY);
-        const it = hit && hit.type === 'item' ? hit.item : null;
-        if (it !== pointer.hoverItem) {
-          setHover(pointer.hoverItem, false);
-          setHover(it, true);
-          pointer.hoverItem = it;
+        if (!pointer.isTouch) {
+          const hit = pickAt(e.clientX, e.clientY);
+          const it = hit && hit.type === 'item' ? hit.item : null;
+          if (it !== pointer.hoverItem) {
+            setHover(pointer.hoverItem, false);
+            setHover(it, true);
+            pointer.hoverItem = it;
+          }
+          el.style.cursor = it ? (hit.edge ? 'ew-resize' : 'pointer') : 'grab';
         }
-        el.style.cursor = it ? (hit.edge ? 'ew-resize' : 'pointer') : 'grab';
       }
     });
 
@@ -687,36 +737,46 @@
       const now = performance.now();
       lastInteract = now;
 
-      // 移动端专用手势识别（轻滑翻页、轻触翻折，彻底杜绝误转与疯狂抽搐）
+      // 移动端专用交互处理
       if (pointer.isTouch || (e && e.pointerType === 'touch')) {
         const dx = (e ? e.clientX : pointer.lx) - pointer.x0;
         const dy = (e ? e.clientY : pointer.ly) - pointer.y0;
-        const dt = now - pointer.lt;
+        const duration = now - (pointer.lt0 || pointer.lt);
 
-        // 1. 横向轻滑：向左滑翻后页，向右滑翻前页
-        if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 1.05) {
-          if (dx < 0) {
-            doFlip(1);
-          } else {
-            doFlip(-1);
+        // 1. 如果手指拖动过（moved >= 14px）：判定为视角自由旋转
+        if (pointer.moved >= 14) {
+          // 极快速横向划页手势（flick 手势：快速划过且水平位移占绝对主导）：触发翻页
+          const speedX = Math.abs(dx) / Math.max(1, duration);
+          if (duration < 260 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2.5 && speedX > 0.45) {
+            doFlip(dx < 0 ? 1 : -1);
+            view.vAz = 0; view.vPol = 0;
           }
+          // 其余所有拖拽行为均视为自由旋转视角，松手自然回旋惯性，不误触发翻页
+          pointer.mode = null;
+          pointer.item = null;
+          pointer.hitItem = null;
           return;
         }
 
-        // 2. 屏幕轻触：触碰屏幕右侧翻后页，触碰左侧翻前页，触碰居中切换姿态
-        if (pointer.moved < 18) {
-          const w = window.innerWidth;
-          const x = e ? e.clientX : pointer.lx;
-          if (x > w * 0.55) {
-            doFlip(1);
-          } else if (x < w * 0.45) {
-            doFlip(-1);
-          } else {
-            view.poseT = view.poseT ? 0 : 1;
-            Sfx.page(0.85);
-            syncUI();
-          }
+        // 2. 如果手指几乎未动（moved < 14px）：判定为轻触点击（Tap）
+        // 若在合册状态下点击封面：连翻展卷
+        if (pointer.hitItem && pointer.hitItem.kind === 'cover' && book.cursor === 0) {
+          doRiffleToNewest();
+          pointer.mode = null;
+          return;
         }
+
+        // 屏幕区域轻触：屏幕右半侧翻后页，左半侧翻前页
+        const w = window.innerWidth;
+        const tapX = e ? e.clientX : pointer.lx;
+        if (tapX > w * 0.6) {
+          doFlip(1);
+        } else if (tapX < w * 0.4) {
+          doFlip(-1);
+        }
+        pointer.mode = null;
+        pointer.item = null;
+        pointer.hitItem = null;
         return;
       }
 
@@ -750,7 +810,7 @@
 
     // 滚轮：拉近推远；Shift+滚轮：翻页
     window.addEventListener('wheel', (e) => {
-      if (e.target.closest && e.target.closest('.ui')) return;
+      if (e.target.closest && (e.target.closest('.ui') || e.target.closest('.mobile-tools'))) return;
       lastInteract = performance.now();
       if (e.shiftKey) {
         wheelAcc += e.deltaY;
@@ -771,33 +831,56 @@
       else if (k === 'Home') { Sfx.riffle(4); book.goTo(0, { riffle: true }); syncUI(); }
       else if (k === 'End') { doRiffleToNewest(); }
       else if (k === 'r' || k === 'R') {
-        view.az = 0.36; view.pol = 1.16; view.zoom = 1; view.vAz = view.vPol = 0;
-        view.pan.set(0, 0, 0);
-        view.pose = 1; view.poseT = 1;
-        if (book) book.group.rotation.x = 1.44;
-        syncUI();
+        if (window._appResetView) window._appResetView(true);
       }
-      else if (k === 'f' || k === 'F') { view.poseT = view.poseT ? 0 : 1; syncUI(); }
+      else if (k === 'f' || k === 'F') {
+        if (window._appTogglePose) window._appTogglePose();
+      }
     });
 
-    // 双指捏合缩放（仅当双指接触时触发，绝不与单指滑页冲突）
+    // 双指手势：双指捏合缩放（拉近/推远）与双指拖拽平移视角
     let pinch0 = 0;
+    let twoTouchMid0 = { x: 0, y: 0 };
+    let pan0 = { x: 0, y: 0 };
     const dist2 = (e) => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    const mid2 = (e) => ({
+      x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+      y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+    });
+
     el.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 2) {
+      if (e.touches.length >= 2) {
+        pointer.down = false; // 双指触碰时立即终止单指旋转
         pinch0 = dist2(e);
+        twoTouchMid0 = mid2(e);
+        pan0 = { x: view.pan.x, y: view.pan.y };
       }
     }, { passive: true });
+
     el.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 2 && pinch0 > 0) {
+      if (e.touches.length >= 2) {
+        pointer.down = false;
+        // 1. 双指缩放
         const d = dist2(e);
-        if (Math.abs(d - pinch0) > 4) {
+        if (pinch0 > 0 && Math.abs(d - pinch0) > 2) {
           view.zoom = clamp(view.zoom * (pinch0 / d), 0.40, 2.8);
           pinch0 = d;
         }
+        // 2. 双指平移（移动古籍在视口中的焦点）
+        const mid = mid2(e);
+        const dx = mid.x - twoTouchMid0.x;
+        const dy = mid.y - twoTouchMid0.y;
+        const scale = (fitDistance() * view.zoom) / renderer.domElement.clientHeight * 1.5;
+        view.pan.x = clamp(pan0.x - dx * scale, -0.35, 0.35);
+        view.pan.y = clamp(pan0.y + dy * scale, -0.30, 0.30);
+        view.vAz = 0; view.vPol = 0;
         e.preventDefault();
       }
     }, { passive: false });
+
+    el.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) pinch0 = 0;
+    }, { passive: true });
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -920,8 +1003,8 @@
 
     const isMobileDevice = isMobile || window.innerWidth < 800;
     const hintMsg = isMobileDevice
-      ? '左右轻滑或轻触两侧翻页　·　点「展卷」连翻诗页'
-      : '点「展卷」连翻诗页　·　拖动旋转　·　右键平移　·　滚轮缩放　·　F 姿态切换';
+      ? '单指滑动画卷自由旋转视角　·　双指缩放平移　·　轻触翻页'
+      : '拖动自由旋转视角　·　右键平移　·　滚轮缩放　·　F 姿态　·　R 正位';
     setTimeout(() => showHint(hintMsg, 4500), 2000);
 
     // 默认开卷入场：合册立起后，封面掀开，伴随清脆纸声哗啦啦一路连翻至最新一首诗
@@ -932,6 +1015,8 @@
       next: () => doFlip(1), prev: () => doFlip(-1),
       riffleTo, latest: () => { const p = newestPage(); if (p) riffleTo(cursorForPage(p)); },
       goTo: (n, o) => { book.goTo(n, o); syncUI(); },
+      resetView: (anim) => window._appResetView && window._appResetView(anim),
+      togglePose: () => window._appTogglePose && window._appTogglePose(),
       toScreen: (x, y, z) => {
         const v = new THREE.Vector3(x, y, z).project(camera);
         return { x: (v.x * 0.5 + 0.5) * renderer.domElement.clientWidth, y: (-v.y * 0.5 + 0.5) * renderer.domElement.clientHeight };
