@@ -166,7 +166,7 @@ window.BookView = (function () {
     const innerMatA = new THREE.MeshPhysicalMaterial({ map: Tex.tex(opts.innerCanvasA), roughness: 0.95, metalness: 0 });
     const innerMatB = new THREE.MeshPhysicalMaterial({ map: Tex.tex(opts.innerCanvasB), roughness: 0.95, metalness: 0 });
 
-    const backBoard = buildBoard(coverMat, innerMatB);
+    const backBoard = buildBoard(innerMatB, coverMat);
     const frontBoard = buildBoard(coverMat, innerMatA);
 
     /* ---------- 书脊侧实心纸边（线装书的书脊＝纸页侧边＋过线） ---------- */
@@ -346,16 +346,16 @@ window.BookView = (function () {
         const bw = W - gw;
         if (rightTh > 0.00012) {
           blockR.visible = true;
-          blockR.scale.y = rightTh;
+          blockR.scale.y = Math.max(0.0001, rightTh);
           blockR.position.set(gw + bw / 2, BT + rightTh / 2, 0);
-          blockR.material[0].map.repeat.set(1, rightTh / P.EDGE_REF);
+          blockR.material[0].map.repeat.set(1, Math.max(0.01, rightTh / P.EDGE_REF));
         } else blockR.visible = false;
 
         if (leftTh > 0.00012) {
           blockL.visible = true;
-          blockL.scale.y = leftTh;
+          blockL.scale.y = Math.max(0.0001, leftTh);
           blockL.position.set(-(gw + bw / 2), BT + leftTh / 2, 0);
-          blockL.material[1].map.repeat.set(1, leftTh / P.EDGE_REF);
+          blockL.material[1].map.repeat.set(1, Math.max(0.01, leftTh / P.EDGE_REF));
         } else blockL.visible = false;
 
         // 书脊侧实心纸边 + 线装过线（随开合升降）
@@ -378,14 +378,16 @@ window.BookView = (function () {
       next() {
         if (this.cursor >= N + 1) return false;
         const it = items[this.cursor];
+        if (!it) return false;
         it.target = 1; it.vel = Math.max(it.vel, 3.4);
-        this.cursor++;
+        this.cursor = clamp(this.cursor + 1, 0, N + 1);
         return true;
       },
       prev() {
         if (this.cursor <= 0) return false;
-        this.cursor--;
+        this.cursor = clamp(this.cursor - 1, 0, N + 1);
         const it = items[this.cursor];
+        if (!it) return false;
         it.target = 0; it.vel = Math.min(it.vel, -3.4);
         return true;
       },
@@ -415,7 +417,8 @@ window.BookView = (function () {
         it._dirty = false;
         this.apply(it);
         if (syncCursor) {
-          this.cursor = it.kind === 'cover' ? (p > 0.5 ? 1 : 0) : clamp(it.r + (p > 0.5 ? 1 : 0), 0, N + 1);
+          const itemIdx = items.indexOf(it);
+          this.cursor = clamp(itemIdx + (p > 0.5 ? 1 : 0), 0, N + 1);
         }
       },
       endDrag(fling) {
@@ -428,15 +431,14 @@ window.BookView = (function () {
         else to = it.p > 0.32 ? 1 : 0;
         it.target = to;
         it.vel = 0;
-        this.cursor = it.kind === 'cover'
-          ? (to > 0.5 ? 1 : 0)
-          : clamp(it.r + (to > 0.5 ? 1 : 0), 0, N + 1);
+        const itemIdx = items.indexOf(it);
+        this.cursor = clamp(itemIdx + (to > 0.5 ? 1 : 0), 0, N + 1);
         return { item: it, to };
       },
       spread() {
-        const c = this.cursor;
-        const left = c >= 1 ? items[c - 1].pageData.verso : null;
-        const right = c <= N ? items[c].pageData.recto : null;
+        const c = clamp(this.cursor, 0, N + 1);
+        const left = c >= 1 && c - 1 < items.length ? items[c - 1].pageData.verso : null;
+        const right = c < items.length ? items[c].pageData.recto : null;
         return { left, right, index: c, total: N + 1 };
       },
       /** 包围盒按「目标状态」算，不用动画中间态，取景才不会每翻一页就推拉一次 */

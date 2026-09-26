@@ -154,8 +154,9 @@ window.Typeset = (function () {
       };
     });
     const tocChunks = [];
-    for (let i = 0; i < tocColumns.length; i += cols) tocChunks.push(tocColumns.slice(i, i + cols));
-    if (!tocChunks.length) tocChunks.push([]);
+    if (poems.length > 1) {
+      for (let i = 0; i < tocColumns.length; i += cols) tocChunks.push(tocColumns.slice(i, i + cols));
+    }
     const tocPages = tocChunks.map((ch, i) => ({
       kind: 'toc', columns: ch, pageLabel: '', tocContinues: i > 0, first: i === 0,
     }));
@@ -163,7 +164,7 @@ window.Typeset = (function () {
     /* ---- 拼成「面」的序列，再两两成叶 ---- */
     const sides = [];
     sides.push({ kind: 'title' });                                  // 扉页
-    sides.push(...tocPages);                                        // 目錄
+    if (tocPages.length) sides.push(...tocPages);                   // 目錄（多首诗时收录）
     sides.push(...bodyPages);                                       // 正文
     sides.push({
       kind: 'colophon',

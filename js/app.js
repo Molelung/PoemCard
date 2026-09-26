@@ -387,61 +387,115 @@
     if (k === 'endpaper') return '封里';
     if (k === 'title') return '扉页';
     if (k === 'toc') return '目錄';
-    if (k === 'body') { const poem = POEMS[pg.poemIndex]; return poem ? poem.title : '正文'; }
-    if (k === 'colophon') return '卷末';
-    if (k === 'blank') return '空白叶';
+    if (k === 'body') {
+      const poem = POEMS[pg.poemIndex];
+      const hasTitle = (pg.columns || []).some((c) => c.isTitle);
+      if (hasTitle) return poem ? poem.title : '正文';
+      return (poem ? poem.title + ' · ' : '') + '小序';
+    }
+    if (k === 'colophon') return '卷末跋语';
+    if (k === 'blank') return '护叶';
     return '';
   }
+
+  function openScroll() {
+    if (!ui.scrollOverlay) return;
+    ui.scrollOverlay.classList.add('open');
+    ui.scrollOverlay.setAttribute('aria-hidden', 'false');
+    Sfx.page(0.85);
+    lastInteract = performance.now();
+  }
+
+  function closeScroll() {
+    if (!ui.scrollOverlay) return;
+    ui.scrollOverlay.classList.remove('open');
+    ui.scrollOverlay.setAttribute('aria-hidden', 'true');
+    Sfx.page(0.95);
+    lastInteract = performance.now();
+  }
+
   function buildUI() {
-    ui.plaqueT = $('#plaque-title');
-    ui.plaqueS = $('#plaque-sub');
-    ui.counter = $('#counter');
-    ui.ticks = $('#ticks');
+    ui.curPoemTitle = $('#cur-poem-title');
+    ui.curPageInfo = $('#cur-page-info');
     ui.btnPrev = $('#btn-prev');
     ui.btnNext = $('#btn-next');
-    ui.btnLatest = $('#btn-latest');
     ui.btnSound = $('#btn-sound');
     ui.btnPose = $('#btn-pose');
     ui.hint = $('#hint');
 
-    const total = book.N + 2;
-    for (let i = 0; i < total; i++) {
-      const b = document.createElement('button');
-      b.className = 'tick';
-      b.type = 'button';
-      b.title = '第 ' + i + ' 叶';
-      b.setAttribute('aria-label', '跳到第 ' + i + ' 叶');
-      b.addEventListener('click', () => {
-        if (i === book.cursor) return;
-        const n = Math.abs(i - book.cursor);
-        book.goTo(i, { riffle: n > 3 });
-        n > 3 ? Sfx.riffle(n) : Sfx.page(1);
-        syncUI();
-        lastInteract = performance.now();
-      });
-      ui.ticks.appendChild(b);
-    }
-    ui.btnPrev.addEventListener('click', () => doFlip(-1));
-    ui.btnNext.addEventListener('click', () => doFlip(1));
-    ui.btnLatest.addEventListener('click', () => { const p = newestPage(); if (p) riffleTo(cursorForPage(p)); });
-    ui.btnSound.addEventListener('click', () => {
+    ui.scrollOverlay = $('#scroll-overlay');
+    ui.scrollBackdrop = $('#scroll-backdrop');
+    ui.btnOpenScroll = $('#btn-open-scroll');
+    ui.btnCloseScroll = $('#btn-close-scroll');
+    ui.btnRollUp = $('#btn-roll-up');
+    ui.sBtnPose = $('#s-btn-pose');
+    ui.sBtnSound = $('#s-btn-sound');
+    ui.sBtnReset = $('#s-btn-reset');
+    ui.scrollNavPages = $('#scroll-nav-pages');
+
+    if (ui.btnPrev) ui.btnPrev.addEventListener('click', () => doFlip(-1));
+    if (ui.btnNext) ui.btnNext.addEventListener('click', () => doFlip(1));
+
+    if (ui.btnOpenScroll) ui.btnOpenScroll.addEventListener('click', openScroll);
+    if (ui.btnCloseScroll) ui.btnCloseScroll.addEventListener('click', closeScroll);
+    if (ui.btnRollUp) ui.btnRollUp.addEventListener('click', closeScroll);
+    if (ui.scrollBackdrop) ui.scrollBackdrop.addEventListener('click', closeScroll);
+
+    const toggleSound = () => {
       Sfx.on = !Sfx.on;
-      ui.btnSound.classList.toggle('off', !Sfx.on);
-      ui.btnSound.setAttribute('aria-pressed', String(Sfx.on));
+      if (ui.btnSound) {
+        ui.btnSound.classList.toggle('off', !Sfx.on);
+        ui.btnSound.textContent = Sfx.on ? '清音' : '幽静';
+        ui.btnSound.setAttribute('aria-pressed', String(Sfx.on));
+      }
+      if (ui.sBtnSound) {
+        ui.sBtnSound.querySelector('.chip-txt').textContent = Sfx.on ? '清音 · 启' : '清音 · 闭';
+      }
       if (Sfx.on) Sfx.page(0.9);
       lastInteract = performance.now();
-    });
-    if (!CFG.sound) ui.btnSound.classList.add('off');
-    if (ui.btnPose) {
-      ui.btnPose.addEventListener('click', () => {
-        view.poseT = view.poseT ? 0 : 1;
-        Sfx.page(0.85);
-        syncUI();
-        lastInteract = performance.now();
+    };
+
+    const togglePose = () => {
+      view.poseT = view.poseT ? 0 : 1;
+      Sfx.page(0.85);
+      syncUI();
+      lastInteract = performance.now();
+    };
+
+    const resetView = () => {
+      view.az = 0.36; view.pol = 1.16; view.zoom = 1; view.vAz = view.vPol = 0;
+      view.pan.set(0, 0, 0);
+      view.poseT = 0;
+      Sfx.page(0.85);
+      syncUI();
+      lastInteract = performance.now();
+    };
+
+    if (ui.btnSound) ui.btnSound.addEventListener('click', toggleSound);
+    if (ui.sBtnSound) ui.sBtnSound.addEventListener('click', toggleSound);
+    if (ui.btnPose) ui.btnPose.addEventListener('click', togglePose);
+    if (ui.sBtnPose) ui.sBtnPose.addEventListener('click', togglePose);
+    if (ui.sBtnReset) ui.sBtnReset.addEventListener('click', resetView);
+
+    // 卷轴内各叶直达导航
+    if (ui.scrollNavPages) {
+      ui.scrollNavPages.querySelectorAll('.nav-item').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tgt = parseInt(btn.dataset.cursor, 10);
+          if (!isNaN(tgt)) {
+            const n = Math.abs(tgt - book.cursor);
+            book.goTo(tgt, { riffle: n > 2 });
+            n > 2 ? Sfx.riffle(n) : Sfx.page(1);
+            syncUI();
+            lastInteract = performance.now();
+          }
+        });
       });
     }
+
     syncUI();
   }
+
   function syncUI() {
     const sp = book.spread();
     const L = sp.left, R = sp.right;
@@ -450,33 +504,45 @@
     else if (L && L.kind === 'body') main = L;
     else if (R && R.kind !== 'cover' && R.kind !== 'endpaper') main = R;
     else if (L && L.kind !== 'endpaper' && L.kind !== 'cover') main = L;
+
     let title, sub = '';
     if (main) {
       title = sideLabel(main);
       if (main.kind === 'body') {
         const poem = POEMS[main.poemIndex];
         const l = poem && Lunar.solarToLunar(poem.date);
-        if (l) sub = l.ganzhi + l.monthAlias + (l.term ? '　' + l.term : '');
-        if (poem && poem.place) sub += (sub ? '　' : '') + poem.place;
+        if (l) sub = l.ganzhi + l.monthAlias + (l.term ? ' · ' + l.term : '');
+        if (poem && poem.place) sub += (sub ? ' · ' : '') + poem.place;
       }
     } else {
-      title = BOOK_INFO.title || '〇〇〇〇〇';
-      sub = book.cursor === 0 ? '点封面 · 扬至最新' : '';
+      title = BOOK_INFO.title || '墨瀾詩草';
+      sub = book.cursor === 0 ? '合册 · 点封面翻开' : (book.cursor > book.N ? '末叶 · 跋语终' : '');
     }
-    if (ui.plaqueT) ui.plaqueT.textContent = title || '—';
-    if (ui.plaqueS) ui.plaqueS.textContent = sub || '';
-    if (ui.counter) {
-      ui.counter.textContent = book.cursor === 0 ? '合　册'
-        : (book.cursor > book.N ? '末　叶' : '第 ' + book.cursor + ' 叶 / 共 ' + book.N + ' 叶');
+
+    if (ui.curPoemTitle) {
+      ui.curPoemTitle.textContent = title === '封面' ? BOOK_INFO.title || '墨瀾詩草' : `《${title}》`;
     }
+    if (ui.curPageInfo) {
+      let pageText = '';
+      if (book.cursor === 0) pageText = '合　册';
+      else if (book.cursor > book.N) pageText = '卷末 · 跋语终';
+      else pageText = `第 ${book.cursor} 叶 / 共 ${book.N} 叶` + (sub ? ` · ${sub}` : '');
+      ui.curPageInfo.textContent = pageText;
+    }
+
     if (ui.btnPrev) ui.btnPrev.disabled = book.cursor <= 0;
     if (ui.btnNext) ui.btnNext.disabled = book.cursor >= book.N + 1;
-    if (ui.ticks) {
-      const kids = ui.ticks.children;
-      for (let i = 0; i < kids.length; i++) kids[i].classList.toggle('on', i <= book.cursor);
+    if (ui.btnPose) ui.btnPose.textContent = view.poseT ? '伏案' : '立册';
+
+    // 同步卷轴内导览选中态
+    if (ui.scrollNavPages) {
+      ui.scrollNavPages.querySelectorAll('.nav-item').forEach((btn) => {
+        const c = parseInt(btn.dataset.cursor, 10);
+        btn.classList.toggle('active', c === book.cursor);
+      });
     }
-    if (ui.btnPose) ui.btnPose.textContent = view.poseT ? '平放' : '立起';
   }
+
   function doFlip(dir) {
     const ok = dir > 0 ? book.next() : book.prev();
     if (ok) { Sfx.page(dir > 0 ? 1.05 : 0.92); lastInteract = performance.now(); }
@@ -582,7 +648,8 @@
           const to = pointer.dir > 0 ? 1 : 0;
           if (!(to > 0.5 && maybeOpenToNewest(it))) {
             it.target = to; it.vel = 0;
-            book.cursor = it.kind === 'cover' ? (to ? 1 : 0) : clamp(it.r + (to ? 1 : 0), 0, book.N + 1);
+            const itemIdx = book.items.indexOf(it);
+            book.cursor = clamp(itemIdx + (to ? 1 : 0), 0, book.N + 1);
             Sfx.page(1.1);
           }
         } else {
@@ -605,7 +672,7 @@
 
     // 滚轮：拉近推远；Shift+滚轮：翻页
     window.addEventListener('wheel', (e) => {
-      if (e.target.closest && e.target.closest('.ui')) return;
+      if (e.target.closest && (e.target.closest('.ui') || e.target.closest('.scroll-overlay'))) return;
       lastInteract = performance.now();
       if (e.shiftKey) {
         wheelAcc += e.deltaY;
@@ -625,6 +692,14 @@
       else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'a' || k === 'A') { doFlip(-1); e.preventDefault(); }
       else if (k === 'Home') { Sfx.riffle(5); book.goTo(0, { riffle: true }); syncUI(); }
       else if (k === 'End') { const p = newestPage(); if (p) riffleTo(cursorForPage(p)); }
+      else if (k === 's' || k === 'S') {
+        if (ui.scrollOverlay && ui.scrollOverlay.classList.contains('open')) closeScroll();
+        else openScroll();
+        e.preventDefault();
+      }
+      else if (k === 'Escape') {
+        if (ui.scrollOverlay && ui.scrollOverlay.classList.contains('open')) { closeScroll(); e.preventDefault(); }
+      }
       else if (k === 'r' || k === 'R') {
         view.az = 0.36; view.pol = 1.16; view.zoom = 1; view.vAz = view.vPol = 0;
         view.pan.set(0, 0, 0);
@@ -760,17 +835,17 @@
     });
     floatGroup.add(book.group);
 
-    // 左侧竖排书名 / 著者
-    const vt = $('#vtitle-main'), va = $('#vtitle-au');
-    if (vt) vt.textContent = BOOK_INFO.title || '';
-    if (va) va.textContent = (BOOK_INFO.author || '').replace(/[·・].*$/, '');
-
     buildPickList();
     buildUI();
     bindEvents();
     applyCamera(0.016);
     updateLights();
-    book.goTo(0, { instant: true });
+
+    // 默认直接打开 3D 诗集正文叶（《旧颜》清秋月夜展开面）
+    const targetPage = newestPage();
+    const initialCursor = targetPage ? cursorForPage(targetPage) : 2;
+    book.goTo(initialCursor, { instant: true });
+    autoRiffled = true;
     syncUI();
 
     progress(0.97, '开卷');
@@ -778,7 +853,7 @@
     renderer.render(scene, camera);
     loader.classList.add('done');
     setTimeout(() => loader.remove(), 900);
-    setTimeout(() => showHint('点封面扬至最新　·　拖动旋转　·　右键拖动平移　·　滚轮推拉　·　F 立起', 5200), 700);
+    setTimeout(() => showHint('展卷鉴赏　·　拖动旋转　·　右键平移　·　滚轮缩放　·　F 姿态切换', 4500), 700);
 
     window.BookApp = {
       book, camera, renderer, scene, view, get plan() { return plan; },
