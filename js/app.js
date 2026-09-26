@@ -385,9 +385,53 @@
     if (cursor === null || cursor === undefined) return;
     const n = Math.abs(cursor - book.cursor);
     book.goTo(cursor, { riffle: true });
-    if (n > 2) Sfx.riffle(n); else Sfx.page(1);
+    if (n > 1) Sfx.riffle(Math.max(4, n + 2)); else Sfx.page(1.1);
     syncUI();
     lastInteract = performance.now();
+  }
+
+  /**
+   * 展卷：翻开诗集并伴随一串纸叶连翻声（哗啦啦）一路扬至最新一首诗
+   */
+  function doRiffleToNewest() {
+    if (!book || !plan) return;
+    const p = newestPage();
+    if (!p) return;
+    const targetCursor = cursorForPage(p);
+
+    // 1. 如果当前已经在最新一首诗，合册并重新哗啦啦展卷，让用户随时能欣赏完整的连翻动画
+    if (book.cursor === targetCursor) {
+      book.goTo(0, { riffle: true });
+      Sfx.riffle(3);
+      syncUI();
+      setTimeout(() => {
+        const cover = book.items[0];
+        if (cover) {
+          cover.target = 1; cover.vel = 0;
+          book.cursor = 1;
+          Sfx.page(1.1);
+          syncUI();
+        }
+        setTimeout(() => riffleTo(targetCursor), 380);
+      }, 480);
+      return;
+    }
+
+    // 2. 如果处于合册状态（封面）
+    if (book.cursor === 0) {
+      const cover = book.items[0];
+      if (cover) {
+        cover.target = 1; cover.vel = 0;
+        book.cursor = 1;
+        Sfx.page(1.1);
+        syncUI();
+      }
+      setTimeout(() => riffleTo(targetCursor), 380);
+      return;
+    }
+
+    // 3. 处于其他任意叶面（扉页、跋语、封底等），直接连翻到最新一首诗
+    riffleTo(targetCursor);
   }
 
   /* ---------------- UI ---------------- */
@@ -410,52 +454,24 @@
     return '';
   }
 
-  function openScroll() {
-    if (!ui.scrollOverlay) return;
-    ui.scrollOverlay.classList.add('open');
-    ui.scrollOverlay.setAttribute('aria-hidden', 'false');
-    Sfx.page(0.85);
-    lastInteract = performance.now();
-  }
-
-  function closeScroll() {
-    if (!ui.scrollOverlay) return;
-    ui.scrollOverlay.classList.remove('open');
-    ui.scrollOverlay.setAttribute('aria-hidden', 'true');
-    Sfx.page(0.95);
-    lastInteract = performance.now();
-  }
-
   function buildUI() {
     ui.curPoemTitle = $('#cur-poem-title');
     ui.curPageInfo = $('#cur-page-info');
     ui.btnPrev = $('#btn-prev');
     ui.btnNext = $('#btn-next');
+    ui.btnLatest = $('#btn-latest');
     ui.btnSound = $('#btn-sound');
     ui.btnPose = $('#btn-pose');
     ui.hint = $('#hint');
 
-    ui.scrollOverlay = $('#scroll-overlay');
-    ui.scrollBackdrop = $('#scroll-backdrop');
-    ui.btnOpenScroll = $('#btn-open-scroll');
-    ui.btnCloseScroll = $('#btn-close-scroll');
-    ui.btnRollUp = $('#btn-roll-up');
-    ui.sBtnPose = $('#s-btn-pose');
-    ui.sBtnSound = $('#s-btn-sound');
-    ui.sBtnReset = $('#s-btn-reset');
-    ui.scrollNavPages = $('#scroll-nav-pages');
-
     if (ui.btnPrev) ui.btnPrev.addEventListener('click', () => doFlip(-1));
     if (ui.btnNext) ui.btnNext.addEventListener('click', () => doFlip(1));
+    if (ui.btnLatest) ui.btnLatest.addEventListener('click', doRiffleToNewest);
+
     ui.tapPrev = $('#tap-prev');
     ui.tapNext = $('#tap-next');
     if (ui.tapPrev) ui.tapPrev.addEventListener('click', () => doFlip(-1));
     if (ui.tapNext) ui.tapNext.addEventListener('click', () => doFlip(1));
-
-    if (ui.btnOpenScroll) ui.btnOpenScroll.addEventListener('click', openScroll);
-    if (ui.btnCloseScroll) ui.btnCloseScroll.addEventListener('click', closeScroll);
-    if (ui.btnRollUp) ui.btnRollUp.addEventListener('click', closeScroll);
-    if (ui.scrollBackdrop) ui.scrollBackdrop.addEventListener('click', closeScroll);
 
     const toggleSound = () => {
       Sfx.on = !Sfx.on;
@@ -463,9 +479,6 @@
         ui.btnSound.classList.toggle('off', !Sfx.on);
         ui.btnSound.textContent = Sfx.on ? '清音' : '幽静';
         ui.btnSound.setAttribute('aria-pressed', String(Sfx.on));
-      }
-      if (ui.sBtnSound) {
-        ui.sBtnSound.querySelector('.chip-txt').textContent = Sfx.on ? '清音 · 启' : '清音 · 闭';
       }
       if (Sfx.on) Sfx.page(0.9);
       lastInteract = performance.now();
@@ -478,37 +491,8 @@
       lastInteract = performance.now();
     };
 
-    const resetView = () => {
-      view.az = 0.36; view.pol = 1.16; view.zoom = 1; view.vAz = view.vPol = 0;
-      view.pan.set(0, 0, 0);
-      view.pose = 1; view.poseT = 1;
-      if (book) book.group.rotation.x = 1.44;
-      Sfx.page(0.85);
-      syncUI();
-      lastInteract = performance.now();
-    };
-
     if (ui.btnSound) ui.btnSound.addEventListener('click', toggleSound);
-    if (ui.sBtnSound) ui.sBtnSound.addEventListener('click', toggleSound);
     if (ui.btnPose) ui.btnPose.addEventListener('click', togglePose);
-    if (ui.sBtnPose) ui.sBtnPose.addEventListener('click', togglePose);
-    if (ui.sBtnReset) ui.sBtnReset.addEventListener('click', resetView);
-
-    // 卷轴内各叶直达导航
-    if (ui.scrollNavPages) {
-      ui.scrollNavPages.querySelectorAll('.nav-item').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const tgt = parseInt(btn.dataset.cursor, 10);
-          if (!isNaN(tgt)) {
-            const n = Math.abs(tgt - book.cursor);
-            book.goTo(tgt, { riffle: n > 2 });
-            n > 2 ? Sfx.riffle(n) : Sfx.page(1);
-            syncUI();
-            lastInteract = performance.now();
-          }
-        });
-      });
-    }
 
     syncUI();
   }
@@ -567,12 +551,16 @@
     if (ui.btnNext) ui.btnNext.disabled = book.cursor >= book.N + 1;
     if (ui.btnPose) ui.btnPose.textContent = view.poseT ? '伏案' : '立册';
 
-    // 同步卷轴内导览选中态
-    if (ui.scrollNavPages) {
-      ui.scrollNavPages.querySelectorAll('.nav-item').forEach((btn) => {
-        const c = parseInt(btn.dataset.cursor, 10);
-        btn.classList.toggle('active', c === book.cursor);
-      });
+    if (ui.btnLatest) {
+      const p = newestPage();
+      const targetCursor = p ? cursorForPage(p) : 2;
+      if (book.cursor === 0) {
+        ui.btnLatest.title = '展卷：翻开诗集连翻至最新一首诗（End）';
+      } else if (book.cursor === targetCursor) {
+        ui.btnLatest.title = '展卷鉴赏：重新连翻至最新一首诗';
+      } else {
+        ui.btnLatest.title = '展卷：连翻书页至最新一首诗（End）';
+      }
     }
   }
 
@@ -762,7 +750,7 @@
 
     // 滚轮：拉近推远；Shift+滚轮：翻页
     window.addEventListener('wheel', (e) => {
-      if (e.target.closest && (e.target.closest('.ui') || e.target.closest('.scroll-overlay'))) return;
+      if (e.target.closest && e.target.closest('.ui')) return;
       lastInteract = performance.now();
       if (e.shiftKey) {
         wheelAcc += e.deltaY;
@@ -780,16 +768,8 @@
       lastInteract = performance.now();
       if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown' || k === 'd' || k === 'D') { doFlip(1); e.preventDefault(); }
       else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'a' || k === 'A') { doFlip(-1); e.preventDefault(); }
-      else if (k === 'Home') { Sfx.riffle(5); book.goTo(0, { riffle: true }); syncUI(); }
-      else if (k === 'End') { const p = newestPage(); if (p) riffleTo(cursorForPage(p)); }
-      else if (k === 's' || k === 'S') {
-        if (ui.scrollOverlay && ui.scrollOverlay.classList.contains('open')) closeScroll();
-        else openScroll();
-        e.preventDefault();
-      }
-      else if (k === 'Escape') {
-        if (ui.scrollOverlay && ui.scrollOverlay.classList.contains('open')) { closeScroll(); e.preventDefault(); }
-      }
+      else if (k === 'Home') { Sfx.riffle(4); book.goTo(0, { riffle: true }); syncUI(); }
+      else if (k === 'End') { doRiffleToNewest(); }
       else if (k === 'r' || k === 'R') {
         view.az = 0.36; view.pol = 1.16; view.zoom = 1; view.vAz = view.vPol = 0;
         view.pan.set(0, 0, 0);
@@ -826,19 +806,10 @@
     });
   }
 
-  /** 点封面（或首次向右翻）→ 哗啦啦扬到最新一首；返回是否已接管本次点击 */
+  /** 点封面（或合册时点击）→ 哗啦啦连翻至最新一首诗；返回是否已接管本次点击 */
   function maybeOpenToNewest(item) {
-    if (!item || item.kind !== 'cover' || autoRiffled) return false;
-    const p = newestPage();
-    if (!p) return false;
-    autoRiffled = true;
-    // 先把封面掀开，稍后一串连翻到最新
-    item.target = 1; item.vel = 0;
-    book.cursor = 1;
-    syncUI();
-    Sfx.page(1.1);
-    const c = cursorForPage(p);
-    if (c > 1) setTimeout(() => riffleTo(c), 420);
+    if (!item || item.kind !== 'cover') return false;
+    doRiffleToNewest();
     return true;
   }
 
@@ -870,13 +841,13 @@
           local.poems.forEach((p) => POEMS.push(p));
         }
       }
-      // 远程数据后台静默同步，绝不阻塞用户首屏开卷
-      window.PoemAPI.syncRemoteData().then((res) => {
-        if (res && res.updated) {
-          plan = Typeset.build(BOOK_INFO, POEMS, LAYOUT);
-          syncUI();
-        }
-      }).catch(() => {});
+      // 尝试与云端快速同步 (1.2s 超时防阻断，若云端有更新则在此期间直接加载最新的诗)
+      try {
+        await Promise.race([
+          window.PoemAPI.syncRemoteData(),
+          new Promise((r) => setTimeout(r, 1200))
+        ]);
+      } catch (_) {}
     }
 
     const hasFont = await loadBundledFont();
@@ -937,22 +908,24 @@
     applyCamera(0.016);
     updateLights();
 
-    // 默认直接打开 3D 诗集正文叶（《旧颜》清秋月夜展开面）
-    const targetPage = newestPage();
-    const initialCursor = targetPage ? cursorForPage(targetPage) : 2;
-    book.goTo(initialCursor, { instant: true });
-    autoRiffled = true;
+    // 初始处于合册封面状态
+    book.goTo(0, { instant: true });
     syncUI();
 
     progress(0.97, '开卷');
     await waitFrame();
     renderer.render(scene, camera);
     loader.classList.add('done');
+    setTimeout(() => { if (loader && loader.parentNode) loader.remove(); }, 900);
+
     const isMobileDevice = isMobile || window.innerWidth < 800;
     const hintMsg = isMobileDevice
-      ? '左右轻滑或轻触两侧翻页　·　双指缩放'
-      : '展卷鉴赏　·　拖动旋转　·　右键平移　·　滚轮缩放　·　F 姿态切换';
-    setTimeout(() => showHint(hintMsg, 4500), 700);
+      ? '左右轻滑或轻触两侧翻页　·　点「展卷」连翻诗页'
+      : '点「展卷」连翻诗页　·　拖动旋转　·　右键平移　·　滚轮缩放　·　F 姿态切换';
+    setTimeout(() => showHint(hintMsg, 4500), 2000);
+
+    // 默认开卷入场：合册立起后，封面掀开，伴随清脆纸声哗啦啦一路连翻至最新一首诗
+    setTimeout(() => { doRiffleToNewest(); }, 450);
 
     window.BookApp = {
       book, camera, renderer, scene, view, get plan() { return plan; },

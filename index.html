@@ -56,21 +56,27 @@
   #cur-page-info { font-size: 12px; color: var(--text-dim); }
   .bar-divider { width: 1px; height: 16px; background: rgba(200, 168, 106, 0.22); }
   
-  /* 展卷按钮 */
-  .scroll-trigger {
-    background: linear-gradient(135deg, rgba(200, 168, 106, 0.25), rgba(168, 51, 43, 0.20));
-    border: 1px solid rgba(200, 168, 106, 0.45);
+  /* 展卷：翻动书页至最新一首诗（核心典雅按键） */
+  .bar-btn-riffle {
+    background: linear-gradient(135deg, rgba(200, 168, 106, 0.22), rgba(168, 51, 43, 0.28));
+    border: 1px solid rgba(200, 168, 106, 0.55);
     border-radius: 999px; padding: 6px 16px;
-    color: #f6eedb; font-family: var(--serif); font-size: 13px; letter-spacing: 0.22em;
-    cursor: pointer; display: flex; align-items: center; gap: 6px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.3); transition: all 0.25s ease;
-    white-space: nowrap;
+    color: #f7eedb; font-family: var(--serif); font-size: 13.5px; letter-spacing: 0.18em;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap; flex-shrink: 0;
   }
-  .scroll-trigger:hover {
-    background: linear-gradient(135deg, rgba(200, 168, 106, 0.42), rgba(168, 51, 43, 0.35));
+  .bar-btn-riffle:hover {
+    background: linear-gradient(135deg, rgba(200, 168, 106, 0.38), rgba(168, 51, 43, 0.42));
     border-color: var(--gold); transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(200, 168, 106, 0.25);
+    box-shadow: 0 6px 20px rgba(168, 51, 43, 0.35);
+    color: #fff;
   }
+  .bar-btn-riffle:active {
+    transform: scale(0.96);
+  }
+  .riffle-icon { font-size: 15px; line-height: 1; }
+  .riffle-txt { font-size: 13.5px; font-weight: 500; }
   .bar-tools { display: flex; align-items: center; gap: 6px; }
   .tool-btn {
     background: none; border: 0; color: var(--text-dim); font-family: var(--serif);
@@ -88,166 +94,6 @@
     background: rgba(0,0,0,0.4); padding: 4px 16px; border-radius: 999px;
   }
   #hint.show { opacity: 1; }
-
-  /* ==========================================================================
-   *  古风画卷展开系统 (Ancient Handscroll Modal)
-   * ========================================================================== */
-  .scroll-overlay {
-    position: fixed; inset: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: center;
-    pointer-events: none; opacity: 0; transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .scroll-overlay.open { pointer-events: auto; opacity: 1; }
-  .scroll-backdrop {
-    position: absolute; inset: 0;
-    background: rgba(8, 7, 6, 0.78);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  }
-  .scroll-wrapper {
-    position: relative; z-index: 2; display: flex; align-items: stretch;
-    max-width: 95vw; width: 1060px; max-height: 86vh;
-    transform: scaleX(0.04); opacity: 0;
-    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-    transform-origin: center; filter: drop-shadow(0 28px 65px rgba(0,0,0,0.85));
-  }
-  .scroll-overlay.open .scroll-wrapper { transform: scaleX(1); opacity: 1; }
-
-  /* 左右轴头与轴杆 */
-  .scroll-roller {
-    width: 22px; flex-shrink: 0; display: flex; flex-direction: column;
-    align-items: center; justify-content: space-between; z-index: 5;
-  }
-  .roller-rod {
-    width: 15px; flex: 1;
-    background: linear-gradient(90deg, #2a1f16 0%, #63452e 20%, #a87e58 45%, #e0c59e 56%, #63452e 82%, #19120b 100%);
-    border-radius: 2px; box-shadow: inset 0 0 4px rgba(0,0,0,0.6), 2px 0 8px rgba(0,0,0,0.4);
-  }
-  .roller-knob {
-    width: 22px; height: 16px; border-radius: 3px;
-    background: linear-gradient(180deg, #f0f7f3 0%, #cbdcd2 40%, #9cb3a5 100%);
-    box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 2px 5px rgba(0,0,0,0.4);
-    border: 1px solid #7c9485;
-  }
-  .roller-tassel {
-    width: 2px; height: 36px; background: linear-gradient(180deg, #a8332b, transparent);
-    margin: 4px 0;
-  }
-
-  /* 画卷心部 */
-  .scroll-container {
-    flex: 1; min-width: 0; background: #f6eedb;
-    border-top: 16px solid #241c15; border-bottom: 16px solid #241c15;
-    border-left: 20px solid #33261c; border-right: 20px solid #33261c;
-    box-shadow: inset 0 0 36px rgba(100, 70, 40, 0.22);
-    display: flex; flex-direction: column; overflow: hidden; position: relative;
-    border-radius: 2px;
-  }
-  .scroll-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 26px 12px; border-bottom: 1px solid rgba(168, 51, 43, 0.22);
-    background: rgba(246, 238, 219, 0.96);
-  }
-  .scroll-title-wrap { display: flex; align-items: center; gap: 12px; }
-  .scroll-seal {
-    width: 32px; height: 32px; border: 1.5px solid #a8332b; color: #a8332b;
-    display: flex; align-items: center; justify-content: center; font-size: 13px;
-    border-radius: 2px; background: rgba(168, 51, 43, 0.08); font-weight: bold;
-  }
-  .scroll-title { margin: 0; font-size: 18px; letter-spacing: 0.3em; color: #2a1f16; font-weight: 500; }
-  .scroll-sub { font-size: 11.5px; letter-spacing: 0.2em; color: #7a634e; }
-  .scroll-close {
-    background: none; border: 1px solid rgba(168, 51, 43, 0.35); border-radius: 999px;
-    padding: 4px 14px; color: #a8332b; font-family: var(--serif); font-size: 12.5px;
-    letter-spacing: 0.16em; cursor: pointer; transition: all 0.22s;
-  }
-  .scroll-close:hover { background: #a8332b; color: #fff; }
-
-  .scroll-body {
-    flex: 1; display: flex; overflow: auto; padding: 22px 26px; gap: 26px;
-  }
-
-  /* 宣纸书法区（右向左竖排） */
-  .scroll-calligraphy {
-    flex: 1 1 60%; min-width: 320px; background: #fffcf5;
-    border: 1px solid rgba(180, 140, 90, 0.35); border-radius: 2px;
-    padding: 24px 30px; box-shadow: inset 0 0 24px rgba(0,0,0,0.03);
-    overflow-x: auto; overflow-y: hidden; direction: rtl;
-    scrollbar-width: none; -ms-overflow-style: none;
-  }
-  .scroll-calligraphy::-webkit-scrollbar { display: none; }
-  .calligraphy-inner {
-    writing-mode: vertical-rl; text-orientation: upright;
-    direction: ltr; height: 100%; max-height: 48vh;
-    font-family: var(--serif);
-  }
-  .poem-col {
-    display: inline-block;
-    vertical-align: top;
-  }
-  .poem-col.title-col { margin-left: 20px; }
-  .p-title { font-size: 24px; letter-spacing: 0.42em; color: #1a140f; font-weight: bold; margin-bottom: 12px; }
-  .p-author { font-size: 13.5px; letter-spacing: 0.32em; color: #6a5340; }
-  .poem-col.lines-col {
-    margin-left: 18px;
-  }
-  .p-line {
-    font-size: 17px; letter-spacing: 0.28em; line-height: 2.2; color: #1c150e;
-    margin: 0 4px; white-space: nowrap; display: inline-block; vertical-align: top;
-  }
-  .poem-col.preface-col {
-    margin-left: 16px; font-size: 12.5px; letter-spacing: 0.2em; line-height: 2.1; color: #685443;
-  }
-  .p-note-tag { color: #a8332b; font-size: 12px; letter-spacing: 0.2em; margin-bottom: 8px; white-space: nowrap; }
-  .p-note { margin: 0 3px; white-space: nowrap; display: inline-block; vertical-align: top; }
-  .poem-col.sign-col {
-    font-size: 13px; letter-spacing: 0.24em; color: #725945;
-    margin-top: 24px; display: inline-block; vertical-align: top;
-  }
-  .p-date { display: inline-block; margin-left: 4px; }
-  .p-place { display: inline-block; margin-left: 4px; }
-  .p-seal-box { margin-top: 14px; width: 34px; height: 34px; }
-  .p-seal-img { width: 100%; height: 100%; object-fit: contain; }
-
-  /* 画卷右侧：导览与操作 */
-  .scroll-sidebar {
-    flex: 1 1 40%; min-width: 250px; display: flex; flex-direction: column;
-    gap: 18px; justify-content: space-between;
-  }
-  .sec-title {
-    font-size: 13px; letter-spacing: 0.25em; color: #624b37;
-    border-bottom: 1px solid rgba(160, 115, 60, 0.25);
-    padding-bottom: 5px; margin-bottom: 10px; font-weight: 500;
-  }
-  .page-nav-list { display: flex; flex-direction: column; gap: 8px; }
-  .nav-item {
-    background: rgba(255, 255, 255, 0.75); border: 1px solid rgba(160, 115, 60, 0.22);
-    border-radius: 4px; padding: 8px 14px; display: flex; align-items: center;
-    justify-content: space-between; cursor: pointer; font-family: var(--serif);
-    transition: all 0.2s;
-  }
-  .nav-item:hover { background: #fff; border-color: #a8332b; transform: translateX(3px); }
-  .nav-item.active {
-    background: rgba(168, 51, 43, 0.08); border-color: #a8332b; color: #a8332b; font-weight: bold;
-  }
-  .n-leaf { font-size: 12px; color: #a8332b; letter-spacing: 0.1em; }
-  .n-name { font-size: 13px; color: #2b1f14; letter-spacing: 0.14em; }
-
-  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .setting-chip {
-    background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(160, 115, 60, 0.2);
-    border-radius: 4px; padding: 8px 10px; display: flex; align-items: center; gap: 8px;
-    font-family: var(--serif); font-size: 12.5px; letter-spacing: 0.14em; color: #2b1f14;
-    cursor: pointer; transition: all 0.2s; text-decoration: none;
-  }
-  .setting-chip:hover { background: #fff; border-color: var(--gold); }
-  .chip-icon { font-size: 15px; }
-
-  .roll-up-btn {
-    width: 100%; padding: 10px; font-size: 13.5px; letter-spacing: 0.3em;
-    background: #a8332b; border-color: #8f2922; color: #fff; border-radius: 4px;
-    cursor: pointer; font-family: var(--serif);
-  }
-  .roll-up-btn:hover { background: #be3b32; color: #fff; }
 
   /* ---- 装帧页 ---- */
   #loader {
@@ -350,37 +196,18 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
     }
     .bar-rule { display: none; }
-    .bar-divider { display: none; }
-    .scroll-trigger {
-      padding: 8px 10px; font-size: 14px; min-height: 42px; min-width: 42px; border-radius: 999px; flex-shrink: 0;
-      display: inline-flex; align-items: center; justify-content: center;
-      background: rgba(168, 51, 43, 0.18); border: 1px solid rgba(168, 51, 43, 0.55); color: #f7eedb;
+    .bar-btn-riffle {
+      padding: 8px 12px; font-size: 13px; min-height: 42px; border-radius: 999px; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      background: linear-gradient(135deg, rgba(200, 168, 106, 0.22), rgba(168, 51, 43, 0.32));
+      border: 1px solid rgba(200, 168, 106, 0.6); color: #f7eedb;
     }
-    .scroll-trigger-txt { display: none; }
-    .scroll-icon { font-size: 18px; margin: 0; }
+    .riffle-icon { font-size: 15px; margin: 0; }
+    .riffle-txt { display: inline; font-size: 13px; letter-spacing: 0.08em; }
     .bar-tools { display: none; }
     #hint {
       bottom: 84px; font-size: 13.5px; padding: 6px 18px; letter-spacing: 0.18em;
     }
-
-    /* 画卷弹窗移动端适屏 */
-    .scroll-wrapper {
-      max-width: 96vw; width: 96vw; max-height: 90vh;
-    }
-    .scroll-container {
-      border-left: 8px solid #33261c; border-right: 8px solid #33261c;
-      border-top: 10px solid #241c15; border-bottom: 10px solid #241c15;
-    }
-    .scroll-body {
-      flex-direction: column; padding: 14px; gap: 14px;
-    }
-    .scroll-calligraphy {
-      min-width: 0; max-height: 44vh; padding: 16px 18px;
-    }
-    .calligraphy-inner {
-      font-size: 17px;
-    }
-    .scroll-sidebar { min-width: 0; }
   }
 </style>
 </head>
@@ -427,143 +254,13 @@
     </div>
     <button id="btn-next" class="bar-btn" title="翻下一叶（→ / D / 右滑）">后叶 ›</button>
     <div class="bar-divider"></div>
-    <button id="btn-open-scroll" class="scroll-trigger" title="展开古风画卷鉴赏">
-      <span class="scroll-icon">📜</span>
-      <span class="scroll-trigger-txt">展卷鉴赏</span>
+    <button id="btn-latest" class="bar-btn-riffle" title="展卷：翻动书页至最新一首诗（End）">
+      <span class="riffle-icon">📜</span>
+      <span class="riffle-txt">展卷</span>
     </button>
     <div class="bar-tools">
       <button id="btn-pose" class="tool-btn" title="立起／平放（F）">伏案</button>
       <button id="btn-sound" class="tool-btn" title="翻页清音开关" aria-pressed="true">清音</button>
-    </div>
-  </div>
-
-  <!-- 古风画卷展开系统 (Ancient Handscroll Modal) -->
-  <div id="scroll-overlay" class="scroll-overlay" aria-hidden="true">
-    <div class="scroll-backdrop" id="scroll-backdrop"></div>
-    <div class="scroll-wrapper">
-      <!-- 左轴头装饰 -->
-      <div class="scroll-roller left">
-        <div class="roller-knob top"></div>
-        <div class="roller-rod"></div>
-        <div class="roller-tassel"></div>
-        <div class="roller-knob bottom"></div>
-      </div>
-
-      <!-- 画卷主体 -->
-      <div class="scroll-container">
-        <div class="scroll-header">
-          <div class="scroll-title-wrap">
-            <span class="scroll-seal">墨瀾</span>
-            <div>
-              <h2 class="scroll-title">墨 瀾 詩 草 · 卷 軸</h2>
-              <span class="scroll-sub">甲辰首編 · 手書墨寶</span>
-            </div>
-          </div>
-          <button id="btn-close-scroll" class="scroll-close" title="收卷歸冊">✕ 收卷</button>
-        </div>
-
-        <div class="scroll-body">
-          <!-- 卷轴书法诗文 -->
-          <div class="scroll-calligraphy">
-            <div class="calligraphy-inner">
-              <div class="poem-col title-col">
-                <span class="p-title">旧　颜</span>
-                <span class="p-author">墨瀾 · 著</span>
-              </div>
-              <div class="poem-col lines-col">
-                <p class="p-line">竹影簌簌金绿碎，</p>
-                <p class="p-line">银月皎皎照人归。</p>
-                <p class="p-line">足音泠泠伴流水，</p>
-                <p class="p-line">心弦颤颤诉与谁？</p>
-                <p class="p-line">侧畔忽闻同笑语，</p>
-                <p class="p-line">方知今夕不复寒。</p>
-                <p class="p-line">且行且揽清秋月，</p>
-                <p class="p-line">流光但洗旧时颜。</p>
-              </div>
-              <div class="poem-col preface-col">
-                <div class="p-note-tag">【小序】</div>
-                <div class="p-note">丙午清秋之夕，月明如练。独行竹径，竹影筛金，足音清泠，溪流有声。</div>
-                <div class="p-note">初有落落孤怀，忽闻故人同声笑语，寒意立散，始觉清光可揽、今夕可亲。</div>
-                <div class="p-note">岁月迁流，容颜虽旧，心境常新。因拈此律，以识今夕。</div>
-              </div>
-              <div class="poem-col sign-col">
-                <span class="p-date">岁在丙午仲秋望日</span>
-                <span class="p-place">竹径 · 墨瀾手书</span>
-                <div class="p-seal-box">
-                  <img src="assets/seal.png" class="p-seal-img" alt="墨瀾之印">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 画卷右侧：导览与操作 -->
-          <div class="scroll-sidebar">
-            <div class="sidebar-section">
-              <div class="sec-title">册 頁 導 覽</div>
-              <div class="page-nav-list" id="scroll-nav-pages">
-                <button class="nav-item" data-cursor="0">
-                  <span class="n-leaf">封面</span>
-                  <span class="n-name">墨瀾詩草 題簽</span>
-                </button>
-                <button class="nav-item" data-cursor="1">
-                  <span class="n-leaf">扉頁</span>
-                  <span class="n-name">仿古宋槧 內題</span>
-                </button>
-                <button class="nav-item active" data-cursor="2">
-                  <span class="n-leaf">正文</span>
-                  <span class="n-name">《旧颜》清秋月夜</span>
-                </button>
-                <button class="nav-item" data-cursor="3">
-                  <span class="n-leaf">跋語</span>
-                  <span class="n-name">卷末題記 鐫印</span>
-                </button>
-                <button class="nav-item" data-cursor="4">
-                  <span class="n-leaf">末葉</span>
-                  <span class="n-name">合冊 封底</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="sidebar-section">
-              <div class="sec-title">雅 意 設 制</div>
-              <div class="settings-grid">
-                <button id="s-btn-pose" class="setting-chip">
-                  <span class="chip-icon">📖</span>
-                  <span class="chip-txt">立册 / 伏案</span>
-                </button>
-                <button id="s-btn-sound" class="setting-chip">
-                  <span class="chip-icon">🔔</span>
-                  <span class="chip-txt">清音开关</span>
-                </button>
-                <button id="s-btn-reset" class="setting-chip">
-                  <span class="chip-icon">🎯</span>
-                  <span class="chip-txt">视角正位</span>
-                </button>
-                <a href="poems.html" class="setting-chip">
-                  <span class="chip-icon">🖼️</span>
-                  <span class="chip-txt">诗笺总览</span>
-                </a>
-                <a href="studio.html" class="setting-chip" style="border-color: rgba(111,164,148,0.5); background: rgba(111,164,148,0.12);">
-                  <span class="chip-icon">🖋️</span>
-                  <span class="chip-txt" style="color:#dcf2e9;">文心诗台</span>
-                </a>
-              </div>
-            </div>
-
-            <div class="sidebar-actions">
-              <button id="btn-roll-up" class="roll-up-btn">收 卷 歸 冊</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 右轴头装饰 -->
-      <div class="scroll-roller right">
-        <div class="roller-knob top"></div>
-        <div class="roller-rod"></div>
-        <div class="roller-tassel"></div>
-        <div class="roller-knob bottom"></div>
-      </div>
     </div>
   </div>
 

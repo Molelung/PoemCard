@@ -789,37 +789,20 @@
       showToast(`新诗《${title}》题入成功！`);
     });
 
-    // 云端同步推入
+    // 云端同步推入（原子全量同步至 Cloudflare D1）
     $('#btn-sync-cloud-push').addEventListener('click', async () => {
       const btn = $('#btn-sync-cloud-push');
       btn.disabled = true;
       btn.textContent = '正在同步至 Cloudflare D1…';
 
       try {
-        // 1. 同步全书装帧
-        await PoemAPI.updateBookInfo({
-          title: BOOK_INFO.title,
-          subTitle: BOOK_INFO.subTitle,
-          titleSlip: BOOK_INFO.titleSlip,
-          author: BOOK_INFO.author,
-          signature: BOOK_INFO.signature,
-          colophon: BOOK_INFO.colophon
-        });
-
-        // 2. 同步诗篇
-        for (const p of POEMS) {
-          if (p.id) {
-            await PoemAPI.updatePoem(p.id, p).catch(() => {});
-          } else {
-            const res = await PoemAPI.createPoem(p).catch(() => null);
-            if (res && res.data && res.data.id) p.id = res.data.id;
-          }
-        }
-
+        await PoemAPI.syncFullBook(BOOK_INFO, POEMS);
         PoemAPI.saveLocal(BOOK_INFO, POEMS);
         showToast('全书装帧与所有诗篇已成功推入 Cloudflare D1 数据库！');
+        updateCloudStatusBadge(true);
       } catch (e) {
         showToast('云端同步失败，已暂存本地：' + e.message, true);
+        updateCloudStatusBadge(false);
       } finally {
         btn.disabled = false;
         btn.textContent = '☁️ 立即同步至 Cloudflare 云端';
@@ -837,11 +820,14 @@
           populateForms();
           renderPreview();
           showToast('已从 Cloudflare D1 成功加载最新诗册数据！');
+          updateCloudStatusBadge(true);
         } else {
           showToast('未能获取云端数据，使用当前本地配置', true);
+          updateCloudStatusBadge(false);
         }
       } catch (e) {
         showToast('拉取失败：' + e.message, true);
+        updateCloudStatusBadge(false);
       } finally {
         btn.disabled = false;
         btn.textContent = '🔄 从云端重新拉取最新数据';
@@ -897,6 +883,19 @@ const BOOK_STYLE = ${JSON.stringify(BOOK_STYLE, null, 2)};
 `;
   }
 
+  function updateCloudStatusBadge(ok) {
+    const badge = $('#cloud-status-badge');
+    const txt = $('#cloud-status-txt');
+    if (!badge || !txt) return;
+    if (ok) {
+      txt.textContent = 'Cloudflare D1 直连就绪 (' + (PoemAPI.activeDomain || 'poem.molan.cc.cd') + ')';
+      badge.className = 'badge badge-sm badge-outline gap-1.5 border-seafoam-400 text-seafoam-300 hidden md:inline-flex';
+    } else {
+      txt.textContent = '离线 / 本地模式';
+      badge.className = 'badge badge-sm badge-outline gap-1.5 border-yellow-500 text-yellow-300 hidden md:inline-flex';
+    }
+  }
+
   // 启动
   window.addEventListener('load', async () => {
     // 设置新诗默认日期为今天
@@ -906,6 +905,11 @@ const BOOK_STYLE = ${JSON.stringify(BOOK_STYLE, null, 2)};
     try {
       await PoemAPI.syncRemoteData();
     } catch (_) {}
+
+    // 检测真实云端直连健康状态
+    if (PoemAPI.checkHealth) {
+      PoemAPI.checkHealth().then((ok) => updateCloudStatusBadge(ok));
+    }
 
     populateForms();
     bindEvents();

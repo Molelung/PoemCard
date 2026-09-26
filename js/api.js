@@ -10,7 +10,7 @@
   const WORKERS_DEV = 'https://ancient-poetry-api.mokelin-studio.workers.dev';
   const LOCAL_STORAGE_KEY = 'MOLAN_POEM_BOOK_DATA_V1';
 
-  async function fetchWithTimeout(url, opts = {}, timeout = 3500) {
+  async function fetchWithTimeout(url, opts = {}, timeout = 5000) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     try {
@@ -24,24 +24,41 @@
     }
   }
 
-  let primaryFailed = false;
+  let activeBase = CUSTOM_DOMAIN;
+
   /**
-   * 双轨请求：先尝试自定义域名 poem.molan.cc.cd，若网络不通或未绑定则无缝回退至 workers.dev
+   * 双轨健壮请求：优先走已绑定的自定义域名 poem.molan.cc.cd，遇异常自动回退 workers.dev
    */
-  async function callApi(path, opts = {}, timeout = 4000) {
-    if (!primaryFailed) {
+  async function callApi(path, opts = {}, timeout = 6000) {
+    try {
+      const res = await fetchWithTimeout(`${activeBase}${path}`, opts, timeout);
+      return res;
+    } catch (e1) {
+      const fallback = activeBase === CUSTOM_DOMAIN ? WORKERS_DEV : CUSTOM_DOMAIN;
       try {
-        return await fetchWithTimeout(`${CUSTOM_DOMAIN}${path}`, opts, 1200);
-      } catch (_) {
-        primaryFailed = true; // 域名未生效时快速回退，后续请求无需再次等待超时
+        const res2 = await fetchWithTimeout(`${fallback}${path}`, opts, timeout);
+        activeBase = fallback;
+        return res2;
+      } catch (e2) {
+        throw new Error(`云端服务请求异常: ${e1.message}`);
       }
     }
-    return await fetchWithTimeout(`${WORKERS_DEV}${path}`, opts, timeout);
   }
 
   const PoemAPI = {
     customDomain: CUSTOM_DOMAIN,
     fallbackUrl: WORKERS_DEV,
+    get activeDomain() { return activeBase.replace(/^https?:\/\//, ''); },
+
+    /** 健康检查 */
+    async checkHealth() {
+      try {
+        const res = await callApi('/api/health', {}, 3500);
+        return res && res.status === 'ok';
+      } catch (_) {
+        return false;
+      }
+    },
 
     /** 获取远程诗作列表 */
     async getPoems() {
@@ -93,6 +110,20 @@
       return res;
     },
 
+    /** 全册装帧与所有诗篇一键原子同步 (支持增删改与顺序重排) */
+    async syncFullBook(info, poems) {
+      const payload = {
+        info: info || (typeof BOOK_INFO !== 'undefined' ? BOOK_INFO : {}),
+        poems: poems || (typeof POEMS !== 'undefined' ? POEMS : []),
+      };
+      const res = await callApi('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }, 10000);
+      return res;
+    },
+
     /** 保存至本地缓存 (localStorage) */
     saveLocal(info, poems) {
       try {
@@ -128,7 +159,7 @@
 
     /** 启动时同步数据 (优先本地缓存即时更新，随后与云端 D1 数据库合并) */
     async syncRemoteData() {
-      // 1. 先尝试加载本地用户可能在“诗台”刚编辑好的缓存，实现零延迟即时展现
+      // 1. 先加载本地缓存（0ms 瞬间就绪）
       const local = this.loadLocal();
       if (local) {
         if (local.info && typeof BOOK_INFO !== 'undefined') {

@@ -67,6 +67,47 @@ export default {
         return jsonResponse({ success: true, message: '书册配置更新成功' });
       }
 
+      // 3.5 全册一键原子同步 POST /api/sync
+      if (path === '/api/sync' && method === 'POST') {
+        const body = await request.json();
+        const { info, poems } = body;
+
+        // 1. 同步全书配置
+        if (info && typeof info === 'object') {
+          for (const [k, v] of Object.entries(info)) {
+            const valStr = typeof v === 'object' ? JSON.stringify(v) : String(v);
+            await env.DB.prepare(
+              'INSERT INTO book_config (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = ?2'
+            ).bind(k, valStr).run();
+          }
+        }
+
+        // 2. 同步诗作列表（精确同步增、删、改与次序）
+        if (Array.isArray(poems) && poems.length > 0) {
+          await env.DB.prepare('DELETE FROM poems').run();
+          for (let idx = 0; idx < poems.length; idx++) {
+            const p = poems[idx];
+            const title = String(p.title || '').trim();
+            const author = String(p.author || '墨瀾').trim();
+            const linesArr = Array.isArray(p.lines) ? p.lines : String(p.lines || '').split('\n').map((l) => l.trim()).filter(Boolean);
+            const linesJson = JSON.stringify(linesArr);
+            const date = p.date || new Date().toISOString().split('T')[0];
+            const place = String(p.place || '').trim();
+            const note = String(p.note || '').trim();
+            const signature = p.signature || 'season';
+            const sealImg = p.sealImg || 'assets/seal.png';
+            const sortOrder = idx + 1;
+
+            await env.DB.prepare(
+              `INSERT INTO poems (title, author, lines, date, place, note, signature, seal_img, sort_order)
+               VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
+            ).bind(title, author, linesJson, date, place, note, signature, sealImg, sortOrder).run();
+          }
+        }
+
+        return jsonResponse({ success: true, message: '全册装帧与所有诗篇已原子同步至云端 D1 数据库' });
+      }
+
       // 4. 获取所有诗作列表 GET /api/poems
       if (path === '/api/poems' && method === 'GET') {
         const { results } = await env.DB.prepare(
