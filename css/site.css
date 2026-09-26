@@ -2,6 +2,16 @@
  *  site.css —— 全站共用样式（书斋夜色 + 宣纸 + 古铜金）
  *  配色只有一组：墨底、宣纸、古铜、朱砂
  * ========================================================================== */
+@font-face {
+  font-family: "Zhongchun Fangsong";
+  src: url("../fonts/ZhongchunFangsong-Sub.woff2") format("woff2"),
+       url("../fonts/ZhongchunFangsong-Sub.ttf") format("truetype"),
+       url("../fonts/ZhongchunFangsong-S2T.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --ink: #0b0a09;
   --ink-2: #14110e;

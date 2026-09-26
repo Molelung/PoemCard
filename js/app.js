@@ -15,9 +15,9 @@
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const CFG = {
-    /* 纸页纹理倍率：越大越清晰、生成越慢、显存越多 */
-    texScale: Math.min(isMobile ? 0.95 : 1.5, (BOOK_STYLE && BOOK_STYLE.texScale) || 1.5),
-    maxPixelRatio: isMobile ? 1.5 : 2,
+    /* 纸页纹理倍率：移动端设为 1.6 确保视网膜屏纤毫毕现，桌面端 1.75 */
+    texScale: isMobile ? 1.6 : 1.75,
+    maxPixelRatio: Math.min(window.devicePixelRatio || 2, 2.5),
     idleFloat: true,
     sound: true,
   };
@@ -94,8 +94,9 @@
   async function loadBundledFont() {
     if (BOOK_STYLE && BOOK_STYLE.useBundledFont === false) return false;
     try {
-      const face = new FontFace('Zhongchun Fangsong', "url('fonts/ZhongchunFangsong-S2T.ttf')");
-      await Promise.race([face.load(), new Promise((_, rej) => setTimeout(() => rej(new Error('超时')), 25000))]);
+      if (document.fonts && document.fonts.check('16px "Zhongchun Fangsong"')) return true;
+      const face = new FontFace('Zhongchun Fangsong', "url('fonts/ZhongchunFangsong-Sub.woff2') format('woff2'), url('fonts/ZhongchunFangsong-Sub.ttf') format('truetype'), url('fonts/ZhongchunFangsong-S2T.ttf') format('truetype')");
+      await Promise.race([face.load(), new Promise((_, rej) => setTimeout(() => rej(new Error('超时')), 3500))]);
       document.fonts.add(face);
       return true;
     } catch (e) {
@@ -150,6 +151,9 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.getElementById('stage').appendChild(renderer.domElement);
+    if (window.Tex && Tex.setAnisotropy) {
+      Tex.setAnisotropy(Math.min(16, renderer.capabilities.getMaxAnisotropy()));
+    }
   }
 
   function initScene() {
@@ -515,13 +519,21 @@
     let main = null;
     if (R && R.kind === 'body') main = R;
     else if (L && L.kind === 'body') main = L;
+    else if (R && R.kind === 'colophon') main = R;
+    else if (L && L.kind === 'colophon') main = L;
+    else if (R && R.kind === 'title') main = R;
+    else if (L && L.kind === 'title') main = L;
+    else if (R && R.kind !== 'cover' && R.kind !== 'endpaper' && R.kind !== 'blank') main = R;
+    else if (L && L.kind !== 'endpaper' && L.kind !== 'cover' && L.kind !== 'blank') main = L;
     else if (R && R.kind !== 'cover' && R.kind !== 'endpaper') main = R;
     else if (L && L.kind !== 'endpaper' && L.kind !== 'cover') main = L;
 
-    let title, sub = '';
+    let title = '', sub = '';
+    let isPoem = false;
     if (main) {
       title = sideLabel(main);
       if (main.kind === 'body') {
+        isPoem = true;
         const poem = POEMS[main.poemIndex];
         const l = poem && Lunar.solarToLunar(poem.date);
         if (l) sub = l.ganzhi + l.monthAlias + (l.term ? ' · ' + l.term : '');
@@ -529,16 +541,24 @@
       }
     } else {
       title = BOOK_INFO.title || '墨瀾詩草';
-      sub = book.cursor === 0 ? '合册 · 点封面翻开' : (book.cursor > book.N ? '末叶 · 跋语终' : '');
+      sub = book.cursor === 0 ? '合册 · 封面' : (book.cursor > book.N ? '合册 · 封底' : '');
     }
 
     if (ui.curPoemTitle) {
-      ui.curPoemTitle.textContent = title === '封面' ? BOOK_INFO.title || '墨瀾詩草' : `《${title}》`;
+      if (book.cursor === 0) {
+        ui.curPoemTitle.textContent = BOOK_INFO.title || '墨瀾詩草';
+      } else if (book.cursor > book.N) {
+        ui.curPoemTitle.textContent = (BOOK_INFO.title || '墨瀾詩草') + ' · 封底';
+      } else if (isPoem) {
+        ui.curPoemTitle.textContent = `《${title}》`;
+      } else {
+        ui.curPoemTitle.textContent = title;
+      }
     }
     if (ui.curPageInfo) {
       let pageText = '';
-      if (book.cursor === 0) pageText = '合　册';
-      else if (book.cursor > book.N) pageText = '卷末 · 跋语终';
+      if (book.cursor === 0) pageText = '合册 · 点封面翻开';
+      else if (book.cursor > book.N) pageText = '合册 · 封底';
       else pageText = `第 ${book.cursor} 叶 / 共 ${book.N} 叶` + (sub ? ` · ${sub}` : '');
       ui.curPageInfo.textContent = pageText;
     }
@@ -838,13 +858,25 @@
   async function boot() {
     initRenderer();
     initScene();
-    progress(0.02, '研墨…');
+    progress(0.04, '研墨…');
 
-    // 尝试同步 Cloudflare D1 远程数据库数据（离线自动回退本地）
+    // 1. 本地缓存/基底即时加载，耗时 0ms，无需等待网络
     if (window.PoemAPI) {
-      try {
-        await window.PoemAPI.syncRemoteData();
-      } catch (_) {}
+      const local = window.PoemAPI.loadLocal();
+      if (local) {
+        if (local.info && typeof BOOK_INFO !== 'undefined') Object.assign(BOOK_INFO, local.info);
+        if (Array.isArray(local.poems) && local.poems.length > 0 && typeof POEMS !== 'undefined') {
+          POEMS.length = 0;
+          local.poems.forEach((p) => POEMS.push(p));
+        }
+      }
+      // 远程数据后台静默同步，绝不阻塞用户首屏开卷
+      window.PoemAPI.syncRemoteData().then((res) => {
+        if (res && res.updated) {
+          plan = Typeset.build(BOOK_INFO, POEMS, LAYOUT);
+          syncUI();
+        }
+      }).catch(() => {});
     }
 
     const hasFont = await loadBundledFont();

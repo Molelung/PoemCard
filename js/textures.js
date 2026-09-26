@@ -27,8 +27,8 @@ window.Tex = (function () {
     return { c, x };
   }
 
-  let maxAniso = 4;
-  const setAnisotropy = (v) => { maxAniso = v; };
+  let maxAniso = 16;
+  const setAnisotropy = (v) => { maxAniso = v || 16; };
 
   function tex(canvas, opt) {
     opt = opt || {};
