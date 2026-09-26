@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>墨瀾詩台 · 古籍诗作与全册装帧编修</title>
+<link rel="stylesheet" href="css/site.css">
+<!-- DaisyUI + Tailwind CDN (用于现代工程化组件体系，海沫绿配色) -->
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          seafoam: {
+            50: '#f0f7f4', 100: '#dceee6', 200: '#bbe0d2', 300: '#8ecbb7',
+            400: '#6fa494', 500: '#4e8d7c', 600: '#3c7062', 700: '#325a50',
+            800: '#2b4942', 900: '#263d37',
+          },
+          ink: '#0b0a09',
+          paper: '#f6eedb',
+          xuan: '#fcf8ee',
+          gold: '#c8a86a',
+          vermilion: '#a8332b',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --seafoam: #6fa494;
+    --seafoam-light: rgba(111, 164, 148, 0.18);
+    --gold: #c8a86a;
+    --paper-card: rgba(22, 18, 14, 0.88);
+  }
+  body {
+    background: #0b0a09;
+    color: var(--text);
+    font-family: var(--serif);
+    min-height: 100vh;
+  }
+  .studio-nav {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(12, 10, 8, 0.92);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(200, 168, 106, 0.22);
+    padding: 10px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .studio-brand {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .studio-seal-badge {
+    width: 34px; height: 34px; border: 1.5px solid var(--vermilion);
+    color: var(--vermilion); display: grid; place-items: center;
+    font-size: 13px; font-weight: bold; border-radius: 3px;
+    background: rgba(168, 51, 43, 0.12);
+  }
+  .studio-title {
+    margin: 0; font-size: 18px; letter-spacing: 0.2em; color: #f7eedb;
+  }
+  .studio-sub {
+    font-size: 11.5px; color: var(--text-dim); letter-spacing: 0.14em;
+  }
+  .nav-btn {
+    border-radius: 999px; padding: 6px 16px; font-size: 13px; letter-spacing: 0.14em;
+    font-family: var(--serif); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .btn-short-text { display: none; }
+  @media (max-width: 768px) {
+    .studio-nav { padding: 8px 14px; }
+    .studio-sub { display: none; }
+    .studio-title { font-size: 16px; letter-spacing: 0.14em; }
+    .nav-btn { padding: 5px 11px; font-size: 12px; }
+  }
+  @media (max-width: 520px) {
+    .btn-long-text { display: none !important; }
+    .btn-short-text { display: inline !important; }
+  }
+  .nav-btn-seafoam {
+    background: linear-gradient(135deg, rgba(111, 164, 148, 0.28), rgba(200, 168, 106, 0.20));
+    border: 1px solid rgba(111, 164, 148, 0.55); color: #dcf2e9;
+  }
+  .nav-btn-seafoam:hover {
+    background: linear-gradient(135deg, rgba(111, 164, 148, 0.45), rgba(200, 168, 106, 0.35));
+    border-color: #8ecbb7; color: #fff;
+  }
+
+  /* 诗台主工作案 */
+  .studio-container {
+    max-width: 1440px; margin: 0 auto; padding: 24px;
+    display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 24px;
+    position: relative; z-index: 10;
+  }
+  @media (max-width: 1024px) {
+    .studio-container { grid-template-columns: 1fr; padding: 16px; }
+  }
+
+  /* 左侧工作卡片 */
+  .workbench-card {
+    background: var(--paper-card);
+    border: 1px solid rgba(200, 168, 106, 0.22);
+    border-radius: 8px; box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+    overflow: hidden;
+  }
+  .workbench-tabs {
+    display: flex; border-bottom: 1px solid rgba(200, 168, 106, 0.18);
+    background: rgba(10, 8, 6, 0.6); overflow-x: auto;
+  }
+  .w-tab {
+    padding: 13px 20px; font-family: var(--serif); font-size: 14px;
+    letter-spacing: 0.15em; color: var(--text-dim); border: 0; background: none;
+    cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .w-tab:hover { color: #f5ebd3; }
+  .w-tab.active {
+    color: #8ecbb7; border-bottom-color: #6fa494;
+    background: rgba(111, 164, 148, 0.08); font-weight: 500;
+  }
+  .tab-content { padding: 24px; display: none; }
+  .tab-content.active { display: block; }
+
+  /* 表单控件 */
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block; font-size: 13px; letter-spacing: 0.18em; color: #e8dcc0;
+    margin-bottom: 6px; font-family: var(--serif);
+  }
+  .form-hint {
+    font-size: 11.5px; color: var(--text-dim); margin-top: 4px; letter-spacing: 0.08em;
+  }
+  .form-input, .form-textarea, .form-select {
+    width: 100%; background: rgba(8, 7, 5, 0.85);
+    border: 1px solid rgba(200, 168, 106, 0.28);
+    border-radius: 4px; padding: 10px 14px; color: #f7eedb;
+    font-family: var(--serif); font-size: 15px; letter-spacing: 0.1em;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    border-color: #6fa494; box-shadow: 0 0 0 2px rgba(111, 164, 148, 0.22);
+  }
+  .form-textarea { resize: vertical; min-height: 120px; line-height: 1.8; }
+
+  /* 诗作列表芯片卡片 */
+  .poem-chip-list {
+    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 20px;
+    border-bottom: 1px dashed rgba(200, 168, 106, 0.18);
+  }
+  .poem-chip {
+    padding: 8px 16px; border-radius: 6px; background: rgba(15, 12, 10, 0.8);
+    border: 1px solid rgba(200, 168, 106, 0.2); cursor: pointer;
+    font-family: var(--serif); color: var(--text); display: flex; align-items: center; gap: 8px;
+    white-space: nowrap; transition: all 0.2s ease;
+  }
+  .poem-chip:hover { border-color: var(--gold); }
+  .poem-chip.active {
+    border-color: #6fa494; background: rgba(111, 164, 148, 0.16); color: #dcf2e9;
+  }
+  .chip-badge {
+    font-size: 11px; padding: 2px 6px; border-radius: 999px;
+    background: rgba(200, 168, 106, 0.16); color: var(--gold);
+  }
+
+  /* 右侧预览区 */
+  .preview-card {
+    background: var(--paper-card);
+    border: 1px solid rgba(200, 168, 106, 0.22);
+    border-radius: 8px; box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+    padding: 20px; display: flex; flex-direction: column; align-items: center;
+    position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow: auto;
+  }
+  .preview-toolbar {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+  }
+  .preview-mode-btn {
+    padding: 4px 10px; font-size: 12px; border-radius: 4px;
+    border: 1px solid rgba(200, 168, 106, 0.25); background: none; color: var(--text-dim);
+    cursor: pointer; transition: all 0.2s; font-family: var(--serif);
+  }
+  .preview-mode-btn.active {
+    background: #6fa494; color: #0b0a09; font-weight: bold; border-color: #6fa494;
+  }
+  .canvas-stage {
+    background: #f6eedb; border: 1px solid #c8a86a; border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 100%;
+    overflow: auto; display: flex; justify-content: center;
+  }
+  #preview-canvas {
+    max-width: 100%; height: auto; display: block;
+  }
+
+  /* 提示条 */
+  .toast-box {
+    position: fixed; bottom: 24px; right: 24px; z-index: 60;
+    display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+  }
+  .toast-msg {
+    background: rgba(18, 15, 12, 0.95); border: 1px solid #6fa494;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.7); border-radius: 6px;
+    padding: 12px 20px; color: #e6f5ef; font-family: var(--serif); font-size: 13.5px;
+    letter-spacing: 0.12em; display: flex; align-items: center; gap: 10px;
+    animation: fadeIn .3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="bg-layer far"></div>
+  <div class="bg-layer mid"></div>
+  <div class="bg-layer mistimg"></div>
+  <div class="mist"></div>
+</div>
+<div class="vignette"></div>
+<div class="grain"></div>
+
+<!-- 顶栏导航 -->
+<header class="studio-nav">
+  <div class="studio-brand">
+    <div class="studio-seal-badge">墨台</div>
+    <div>
+      <h1 class="studio-title">墨 瀾 詩 台</h1>
+      <div class="studio-sub">全册装帧 · 题诗编修 · 宋槧版面校准</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <div id="cloud-status-badge" class="badge badge-sm badge-outline gap-1.5 border-seafoam-400 text-seafoam-300 hidden md:inline-flex">
+      <span class="w-1.5 h-1.5 rounded-full bg-seafoam-400 animate-pulse"></span>
+      <span id="cloud-status-txt">Cloudflare D1 已就绪</span>
+    </div>
+    <a href="index.html" class="nav-btn nav-btn-seafoam">
+      <span>📖</span> <span class="btn-long-text">回返 3D 诗册</span><span class="btn-short-text">3D 诗册</span>
+    </a>
+    <a href="poems.html" class="nav-btn border border-gold/40 text-paper hover:bg-gold/20">
+      <span>📜</span> <span class="btn-long-text">诗笺通览</span><span class="btn-short-text">诗笺</span>
+    </a>
+  </div>
+</header>
+
+<!-- 主工作区 -->
+<main class="studio-container">
+  <!-- 左侧：多功能编辑工作案 -->
+  <section class="workbench-card">
+    <div class="workbench-tabs">
+      <button class="w-tab active" data-tab="tab-book">全书装帧与题跋</button>
+      <button class="w-tab" data-tab="tab-poems">全册诗作编修</button>
+      <button class="w-tab" data-tab="tab-compose">题入新诗篇</button>
+      <button class="w-tab" data-tab="tab-cloud">云端同步与导出</button>
+    </div>
+
+    <!-- 1. 全书装帧与题跋 -->
+    <div id="tab-book" class="tab-content active">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="form-group">
+          <label class="form-label">诗集全名</label>
+          <input type="text" id="cfg-title" class="form-input" placeholder="墨瀾詩草" value="墨瀾詩草">
+          <div class="form-hint">显示于封面、扉页、天头鱼尾页眉及卷末题跋</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">卷次 / 副题</label>
+          <input type="text" id="cfg-subtitle" class="form-input" placeholder="甲辰首編" value="甲辰首編">
+          <div class="form-hint">显示于扉页书名下方</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="form-group">
+          <label class="form-label">布面书衣题签文字</label>
+          <input type="text" id="cfg-slip" class="form-input" placeholder="墨瀾詩草" value="墨瀾詩草">
+          <div class="form-hint">竖排题写于外封蓝布洒金签条上</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">著者署名</label>
+          <input type="text" id="cfg-author" class="form-input" placeholder="墨瀾 · 著" value="墨瀾 · 著">
+          <div class="form-hint">显示于扉页及题记署名</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">时序落款规则</label>
+        <select id="cfg-signature" class="form-select">
+          <option value="season" selected>农历干支与节气（如：岁在丙午仲秋望日）</option>
+          <option value="ymd">公历年月日（如：二〇二六年九月）</option>
+          <option value="simple">简要干支（如：丙午秋）</option>
+        </select>
+      </div>
+
+      <!-- 卷末跋语（最后介绍页） -->
+      <div class="form-group">
+        <div class="flex justify-between items-center mb-1">
+          <label class="form-label m-0">卷末跋语（最后介绍页文字）</label>
+          <button type="button" id="btn-colophon-sample" class="text-xs text-seafoam-300 hover:underline">填入宋槧范例</button>
+        </div>
+        <textarea id="cfg-colophon" class="form-textarea" rows="6" placeholder="输入卷末跋文，每行一列，首行为跋目，尾行为签名落款"></textarea>
+        <div class="form-hint">
+          古宋槧体例：首行建议为跋目（如“墨瀾詩草跋”），中间为跋文，尾行为题跋签名与钤印。系统已内置自动折列防溢出与居中排版！
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button type="button" id="btn-save-book" class="btn btn-primary bg-seafoam-500 hover:bg-seafoam-600 border-none text-ink font-bold">
+          保存装帧配置并应用
+        </button>
+        <button type="button" id="btn-preview-colophon" class="btn btn-outline border-gold/40 text-paper hover:bg-gold/20">
+          立即预览卷末跋语页
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. 全册诗作编修 -->
+    <div id="tab-poems" class="tab-content">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-xs tracking-widest text-gold uppercase">选择待修诗篇：</span>
+        <span id="poem-count-badge" class="text-xs text-text-dim">共 1 首诗作</span>
+      </div>
+      <div id="poem-chips-container" class="poem-chip-list">
+        <!-- 动态生成诗篇芯片 -->
+      </div>
+
+      <!-- 当前选中诗篇表单 -->
+      <div id="poem-edit-form" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label">诗名</label>
+            <input type="text" id="poem-title" class="form-input" placeholder="旧颜">
+          </div>
+          <div class="form-group">
+            <label class="form-label">诗人</label>
+            <input type="text" id="poem-author" class="form-input" placeholder="墨瀾">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label">题诗公历日期</label>
+            <input type="date" id="poem-date" class="form-input" value="2026-09-25">
+            <div id="lunar-date-display" class="text-xs text-gold mt-1">换算农历：丙午年仲秋望日</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">题诗地点</label>
+            <input type="text" id="poem-place" class="form-input" placeholder="竹径">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="flex justify-between items-center mb-1">
+            <label class="form-label m-0">正文诗句（一行一句）</label>
+            <span id="poem-metric-info" class="text-xs text-seafoam-300">七言绝句 · 4行28字</span>
+          </div>
+          <textarea id="poem-lines" class="form-textarea" rows="5" placeholder="竹影簌簌金绿碎，银月皎皎照人归。&#10;足音泠泠伴流水，心弦颤颤诉与谁？&#10;侧畔忽闻同笑语，方知今夕不复寒。&#10;且行且揽清秋月，流光但洗旧时颜。"></textarea>
+          <div class="form-hint">竖排版心单列可容 16 字，七言双句浑然成双，标点自动安插字格右上</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">诗前小序 / 跋记（可留空）</label>
+          <textarea id="poem-note" class="form-textarea" rows="4" placeholder="写作缘起或抒怀自述…"></textarea>
+          <div class="form-hint">长小序将自成一叶，短小序将与诗同叶题写</div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 pt-2">
+          <button type="button" id="btn-save-cur-poem" class="btn btn-primary bg-seafoam-500 hover:bg-seafoam-600 border-none text-ink font-bold">
+            保存此篇修改
+          </button>
+          <button type="button" id="btn-del-cur-poem" class="btn btn-outline border-vermilion text-vermilion hover:bg-vermilion hover:text-white">
+            删除本篇
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 题入新诗篇 -->
+    <div id="tab-compose" class="tab-content">
+      <div class="text-sm text-text-dim mb-4 leading-relaxed">
+        新诗题入后，将自动编订为古籍正文叶，生成目录条目，并可一键同步至云端 D1 数据库。
+      </div>
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label">诗名</label>
+            <input type="text" id="new-title" class="form-input" placeholder="如：竹溪夜归">
+          </div>
+          <div class="form-group">
+            <label class="form-label">诗人</label>
+            <input type="text" id="new-author" class="form-input" placeholder="墨瀾" value="墨瀾">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label">题诗公历日期</label>
+            <input type="date" id="new-date" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">题诗地点</label>
+            <input type="text" id="new-place" class="form-input" placeholder="如：竹径、西塞">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">诗句正文（换行分句）</label>
+          <textarea id="new-lines" class="form-textarea" rows="5" placeholder="题入绝句或律诗，例如：&#10;绿竹入幽径，青萝拂行衣。&#10;欢言得所憩，美酒聊共挥。"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">小序说明（选填）</label>
+          <textarea id="new-note" class="form-textarea" rows="3" placeholder="小序叙事抒怀…"></textarea>
+        </div>
+
+        <div class="pt-2">
+          <button type="button" id="btn-add-poem" class="btn btn-primary bg-seafoam-500 hover:bg-seafoam-600 border-none text-ink font-bold w-full">
+            ＋ 题入诗册并保存
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 云端同步与导出 -->
+    <div id="tab-cloud" class="tab-content">
+      <div class="space-y-5">
+        <div class="p-4 rounded-lg bg-black/40 border border-gold/20">
+          <h3 class="text-sm font-bold text-gold tracking-widest mb-2">CLOUDFLARE D1 数据库直连</h3>
+          <p class="text-xs text-text-dim leading-relaxed mb-3">
+            本诗册已配置全功能无服务器后端。所有诗词篇目与装帧文字均可同步保存在云端全球分布式数据库中。
+          </p>
+          <div class="text-xs font-mono text-seafoam-300 bg-black/60 p-2.5 rounded border border-seafoam-900/50 break-all">
+            绑定域名：https://poem.molan.cc.cd<br>
+            备用接口：https://ancient-poetry-api.mokelin-studio.workers.dev
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button type="button" id="btn-sync-cloud-push" class="btn bg-seafoam-500 hover:bg-seafoam-600 border-none text-ink font-bold w-full">
+            ☁️ 立即同步至 Cloudflare 云端
+          </button>
+          <button type="button" id="btn-sync-cloud-pull" class="btn btn-outline border-seafoam-400 text-seafoam-300 hover:bg-seafoam-900/30 w-full">
+            🔄 从云端重新拉取最新数据
+          </button>
+        </div>
+
+        <div class="divider my-4 border-gold/15"></div>
+
+        <div class="p-4 rounded-lg bg-black/40 border border-gold/20">
+          <h3 class="text-sm font-bold text-gold tracking-widest mb-2">本地单机离线导出 (CONTENT.JS)</h3>
+          <p class="text-xs text-text-dim leading-relaxed mb-3">
+            导出最新的 JavaScript 本地离线配置文件。下载后可直接替换项目根目录下的 <code>content.js</code> 并提交至 GitHub 仓库。
+          </p>
+          <div class="flex gap-3">
+            <button type="button" id="btn-export-content-js" class="btn btn-outline border-gold/40 text-paper hover:bg-gold/20">
+              📥 下载 content.js 离线备份
+            </button>
+            <button type="button" id="btn-reset-default" class="btn btn-ghost text-xs text-text-dim hover:text-vermilion">
+              恢复默认初印状态
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右侧：宋槧双栏即时版心预览 -->
+  <aside class="preview-card">
+    <div class="preview-toolbar">
+      <div class="flex items-center gap-1.5">
+        <span class="text-xs text-gold">版面鉴赏：</span>
+        <button type="button" class="preview-mode-btn" data-mode="cover">封面</button>
+        <button type="button" class="preview-mode-btn" data-mode="title">扉页</button>
+        <button type="button" class="preview-mode-btn active" data-mode="poem">当前诗篇</button>
+        <button type="button" class="preview-mode-btn" data-mode="colophon">卷末跋语</button>
+      </div>
+      <button type="button" id="btn-refresh-preview" class="text-xs text-seafoam-300 hover:underline">刷新渲染</button>
+    </div>
+
+    <!-- 宣纸画布容器 -->
+    <div class="canvas-stage">
+      <canvas id="preview-canvas" width="600" height="900"></canvas>
+    </div>
+    <div class="text-[11px] text-text-dim mt-2 tracking-widest text-center">
+      朱丝双栏 · 仲春仿宋 · 竖排右起 · 印泥暗透
+    </div>
+  </aside>
+</main>
+
+<div id="toast-box" class="toast-box"></div>
+
+<!-- 依赖脚本 -->
+<script src="content.js"></script>
+<script src="js/lunar.js"></script>
+<script src="js/textures.js"></script>
+<script src="js/typeset.js"></script>
+<script src="js/api.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
+
+  // 状态
+  let activeTab = 'tab-book';
+  let activePoemIdx = 0;
+  let previewMode = 'poem'; // 'cover' | 'title' | 'poem' | 'colophon'
+  let sealImage = null;
+
+  function showToast(msg, isErr = false) {
+    const box = $('#toast-box');
+    const toast = document.createElement('div');
+    toast.className = 'toast-msg' + (isErr ? ' border-red-500 text-red-200' : '');
+    toast.innerHTML = `<span>${isErr ? '⚠️' : '✓'}</span> <span>${msg}</span>`;
+    box.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.4s';
+      setTimeout(() => toast.remove(), 400);
+    }, 2800);
+  }
+
+  // 初始化加载印章
+  const sealImg = new Image();
+  sealImg.crossOrigin = 'anonymous';
+  sealImg.onload = () => { sealImage = sealImg; renderPreview(); };
+  sealImg.src = (typeof window !== 'undefined' && window.SEAL_DATA_URL) || (BOOK_INFO && BOOK_INFO.sealImg) || 'assets/seal.png';
+
+  // 1. 初始化表单
+  function populateForms() {
+    $('#cfg-title').value = BOOK_INFO.title || '墨瀾詩草';
+    $('#cfg-subtitle').value = BOOK_INFO.subTitle || '甲辰首編';
+    $('#cfg-slip').value = BOOK_INFO.titleSlip || '墨瀾詩草';
+    $('#cfg-author').value = BOOK_INFO.author || '墨瀾 · 著';
+    $('#cfg-signature').value = BOOK_INFO.signature || 'season';
+
+    const colophonLines = Array.isArray(BOOK_INFO.colophon)
+      ? BOOK_INFO.colophon.join('\n')
+      : String(BOOK_INFO.colophon || '');
+    $('#cfg-colophon').value = colophonLines;
+
+    renderPoemChips();
+    populateActivePoem();
+  }
+
+  // 2. 渲染诗作列表芯片
+  function renderPoemChips() {
+    const cont = $('#poem-chips-container');
+    cont.innerHTML = '';
+    $('#poem-count-badge').textContent = `共 ${POEMS.length} 首诗作`;
+
+    POEMS.forEach((p, idx) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = `poem-chip ${idx === activePoemIdx ? 'active' : ''}`;
+      chip.innerHTML = `<span>${p.title || '无题'}</span> <span class="chip-badge">${(p.lines || []).length}句</span>`;
+      chip.addEventListener('click', () => {
+        activePoemIdx = idx;
+        renderPoemChips();
+        populateActivePoem();
+        previewMode = 'poem';
+        updatePreviewModeBtns();
+        renderPreview();
+      });
+      cont.appendChild(chip);
+    });
+  }
+
+  // 3. 填充当前诗作
+  function populateActivePoem() {
+    if (!POEMS[activePoemIdx]) return;
+    const p = POEMS[activePoemIdx];
+    $('#poem-title').value = p.title || '';
+    $('#poem-author').value = p.author || '墨瀾';
+    $('#poem-date').value = p.date || '';
+    $('#poem-place').value = p.place || '';
+    $('#poem-lines').value = Array.isArray(p.lines) ? p.lines.join('\n') : String(p.lines || '');
+    $('#poem-note').value = p.note || '';
+
+    updateLunarDisplay(p.date);
+    updateMetricDisplay(p.lines);
+  }
+
+  function updateLunarDisplay(dStr) {
+    if (!dStr) return;
+    const l = Lunar.solarToLunar(dStr);
+    if (l) {
+      $('#lunar-date-display').textContent = `换算农历：${l.ganzhi}年 ${l.monthAlias} ${l.term ? '· ' + l.term : ''}`;
+    }
+  }
+
+  function updateMetricDisplay(lines) {
+    const arr = Array.isArray(lines) ? lines : String(lines || '').split('\n').filter((l) => l.trim());
+    const count = arr.length;
+    let chars = 0;
+    arr.forEach((l) => chars += l.replace(/[，。！？；：、\s]/g, '').length);
+    const avg = count ? Math.round(chars / count) : 0;
+    const kind = avg === 7 ? (count === 4 ? '七言绝句' : '七言律诗') : (avg === 5 ? (count === 4 ? '五言绝句' : '五言律诗') : '杂言律绝');
+    $('#poem-metric-info').textContent = `${kind} · ${count}句${chars}字`;
+  }
+
+  // 4. 即时版面预览渲染
+  function renderPreview() {
+    const cv = $('#preview-canvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const PPM = 3.2;
+    const PW = Math.round(LAYOUT.w * PPM), PH = Math.round(LAYOUT.h * PPM);
+    cv.width = PW; cv.height = PH;
+
+    const paperA = Tex.paperBase(PW, PH, 12345);
+    const paperB = Tex.paperBase(PW, PH, 54321);
+    const mm = Object.assign({}, LAYOUT, { ppm: PPM });
+
+    if (previewMode === 'cover') {
+      const coverArt = Tex.coverArt(PW, PH, 20260925, mm, {
+        slipText: BOOK_INFO.titleSlip || BOOK_INFO.title,
+        sealImg: sealImage
+      });
+      ctx.drawImage(coverArt, 0, 0);
+      return;
+    }
+
+    let pageData = null;
+    const plan = Typeset.build(BOOK_INFO, POEMS, LAYOUT);
+
+    if (previewMode === 'title') {
+      pageData = { kind: 'title' };
+    } else if (previewMode === 'colophon') {
+      pageData = {
+        kind: 'colophon',
+        columns: Typeset.buildColophonColumns(BOOK_INFO, LAYOUT.rows, LAYOUT.cols),
+        pageLabel: ''
+      };
+    } else {
+      // 当前诗作正文页
+      const range = plan.poemPages[activePoemIdx];
+      const pageIndex = range ? range[0] - 1 : 0;
+      pageData = plan.bodyPages[pageIndex] || plan.bodyPages[0];
+    }
+
+    if (pageData) {
+      const pageCanvas = Tex.renderPage(paperA, paperB, pageData, mm, { sealImg: sealImage });
+      ctx.drawImage(pageCanvas, 0, 0);
+    }
+  }
+
+  function updatePreviewModeBtns() {
+    $$('.preview-mode-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.mode === previewMode);
+    });
+  }
+
+  // 5. 事件绑定
+  function bindEvents() {
+    // 标签页切换
+    $$('.w-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        $$('.w-tab').forEach((t) => t.classList.remove('active'));
+        $$('.tab-content').forEach((c) => c.classList.remove('active'));
+        tab.classList.add('active');
+        activeTab = tab.dataset.tab;
+        $(`#${activeTab}`).classList.add('active');
+      });
+    });
+
+    // 预览模式切换
+    $$('.preview-mode-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        previewMode = btn.dataset.mode;
+        updatePreviewModeBtns();
+        renderPreview();
+      });
+    });
+
+    $('#btn-refresh-preview').addEventListener('click', renderPreview);
+
+    // 装帧表单保存
+    $('#btn-save-book').addEventListener('click', () => {
+      BOOK_INFO.title = $('#cfg-title').value.trim();
+      BOOK_INFO.subTitle = $('#cfg-subtitle').value.trim();
+      BOOK_INFO.titleSlip = $('#cfg-slip').value.trim();
+      BOOK_INFO.author = $('#cfg-author').value.trim();
+      BOOK_INFO.signature = $('#cfg-signature').value;
+
+      const rawCols = $('#cfg-colophon').value.split('\n').map((l) => l.trim()).filter(Boolean);
+      BOOK_INFO.colophon = rawCols;
+
+      PoemAPI.saveLocal(BOOK_INFO, POEMS);
+      showToast('全书装帧及跋语配置已保存至本地！');
+      renderPreview();
+    });
+
+    $('#btn-colophon-sample').addEventListener('click', () => {
+      const sample = [
+        '墨瀾詩草跋',
+        '此冊皆墨瀾手書雜律，歲次丙午秋月刊行。',
+        '仿古宋槧朱絲雙欄，字遵仲春仿宋之體。',
+        '流光但洗，心境常新。',
+        '歲在丙午仲秋 墨瀾識。'
+      ].join('\n');
+      $('#cfg-colophon').value = sample;
+    });
+
+    $('#btn-preview-colophon').addEventListener('click', () => {
+      const rawCols = $('#cfg-colophon').value.split('\n').map((l) => l.trim()).filter(Boolean);
+      BOOK_INFO.colophon = rawCols;
+      previewMode = 'colophon';
+      updatePreviewModeBtns();
+      renderPreview();
+    });
+
+    // 当前诗作编辑保存
+    $('#btn-save-cur-poem').addEventListener('click', () => {
+      if (!POEMS[activePoemIdx]) return;
+      const p = POEMS[activePoemIdx];
+      p.title = $('#poem-title').value.trim();
+      p.author = $('#poem-author').value.trim();
+      p.date = $('#poem-date').value;
+      p.place = $('#poem-place').value.trim();
+      p.lines = $('#poem-lines').value.split('\n').map((l) => l.trim()).filter(Boolean);
+      p.note = $('#poem-note').value.trim();
+
+      PoemAPI.saveLocal(BOOK_INFO, POEMS);
+      renderPoemChips();
+      renderPreview();
+      showToast(`诗作《${p.title}》修改已保存！`);
+    });
+
+    // 删除当前诗作
+    $('#btn-del-cur-poem').addEventListener('click', () => {
+      if (POEMS.length <= 1) {
+        showToast('全书至少保留一首诗作，无法删除！', true);
+        return;
+      }
+      const curTitle = POEMS[activePoemIdx].title;
+      if (!confirm(`确定要从全册中删除诗作《${curTitle}》吗？`)) return;
+
+      const delId = POEMS[activePoemIdx].id;
+      POEMS.splice(activePoemIdx, 1);
+      activePoemIdx = Math.max(0, activePoemIdx - 1);
+
+      if (delId && PoemAPI) {
+        PoemAPI.deletePoem(delId).catch(() => {});
+      }
+      PoemAPI.saveLocal(BOOK_INFO, POEMS);
+      renderPoemChips();
+      populateActivePoem();
+      renderPreview();
+      showToast(`诗作《${curTitle}》已删除！`);
+    });
+
+    // 题入新诗
+    $('#btn-add-poem').addEventListener('click', () => {
+      const title = $('#new-title').value.trim();
+      const author = $('#new-author').value.trim() || '墨瀾';
+      const date = $('#new-date').value || new Date().toISOString().split('T')[0];
+      const place = $('#new-place').value.trim();
+      const lines = $('#new-lines').value.split('\n').map((l) => l.trim()).filter(Boolean);
+      const note = $('#new-note').value.trim();
+
+      if (!title || !lines.length) {
+        showToast('请至少填写诗名与一行诗句！', true);
+        return;
+      }
+
+      const newPoem = {
+        title, author, date, place, lines, note,
+        signature: BOOK_INFO.signature || 'season',
+        sealImg: 'assets/seal.png'
+      };
+
+      POEMS.push(newPoem);
+      activePoemIdx = POEMS.length - 1;
+      PoemAPI.saveLocal(BOOK_INFO, POEMS);
+
+      // 清空题新表单
+      $('#new-title').value = '';
+      $('#new-lines').value = '';
+      $('#new-note').value = '';
+      $('#new-place').value = '';
+
+      // 切换到列表查看
+      $$('.w-tab')[1].click();
+      renderPoemChips();
+      populateActivePoem();
+      renderPreview();
+      showToast(`新诗《${title}》题入成功！`);
+    });
+
+    // 云端同步推入
+    $('#btn-sync-cloud-push').addEventListener('click', async () => {
+      const btn = $('#btn-sync-cloud-push');
+      btn.disabled = true;
+      btn.textContent = '正在同步至 Cloudflare D1…';
+
+      try {
+        // 1. 同步全书装帧
+        await PoemAPI.updateBookInfo({
+          title: BOOK_INFO.title,
+          subTitle: BOOK_INFO.subTitle,
+          titleSlip: BOOK_INFO.titleSlip,
+          author: BOOK_INFO.author,
+          signature: BOOK_INFO.signature,
+          colophon: BOOK_INFO.colophon
+        });
+
+        // 2. 同步诗篇
+        for (const p of POEMS) {
+          if (p.id) {
+            await PoemAPI.updatePoem(p.id, p).catch(() => {});
+          } else {
+            const res = await PoemAPI.createPoem(p).catch(() => null);
+            if (res && res.data && res.data.id) p.id = res.data.id;
+          }
+        }
+
+        PoemAPI.saveLocal(BOOK_INFO, POEMS);
+        showToast('全书装帧与所有诗篇已成功推入 Cloudflare D1 数据库！');
+      } catch (e) {
+        showToast('云端同步失败，已暂存本地：' + e.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '☁️ 立即同步至 Cloudflare 云端';
+      }
+    });
+
+    // 云端重新拉取
+    $('#btn-sync-cloud-pull').addEventListener('click', async () => {
+      const btn = $('#btn-sync-cloud-pull');
+      btn.disabled = true;
+      btn.textContent = '正在拉取云端数据…';
+      try {
+        const res = await PoemAPI.syncRemoteData();
+        if (res.success) {
+          populateForms();
+          renderPreview();
+          showToast('已从 Cloudflare D1 成功加载最新诗册数据！');
+        } else {
+          showToast('未能获取云端数据，使用当前本地配置', true);
+        }
+      } catch (e) {
+        showToast('拉取失败：' + e.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 从云端重新拉取最新数据';
+      }
+    });
+
+    // 导出 content.js
+    $('#btn-export-content-js').addEventListener('click', () => {
+      const code = generateContentJsCode();
+      const blob = new Blob([code], { type: 'application/javascript;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'content.js';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('content.js 离线配置文件已下载！');
+    });
+
+    // 恢复默认
+    $('#btn-reset-default').addEventListener('click', () => {
+      if (!confirm('确定要清除本地修改并恢复初印默认状态吗？')) return;
+      PoemAPI.clearLocal();
+      location.reload();
+    });
+
+    // 诗句输入实时检测
+    $('#poem-lines').addEventListener('input', () => {
+      updateMetricDisplay($('#poem-lines').value);
+    });
+    $('#poem-date').addEventListener('change', () => {
+      updateLunarDisplay($('#poem-date').value);
+    });
+  }
+
+  function generateContentJsCode() {
+    return `/* ==========================================================================
+ *  诗集内容  —— 本地基底数据与离线配置（由墨瀾诗台导出）
+ *  导出时间：${new Date().toLocaleString()}
+ * ========================================================================== */
+
+const BOOK_INFO = ${JSON.stringify(BOOK_INFO, null, 2)};
+
+/* 诗集正文篇目 */
+const POEMS = ${JSON.stringify(POEMS, null, 2)};
+
+/* 全书外观微调 ------------------------------------------------------------- */
+const LAYOUT = ${JSON.stringify(LAYOUT, null, 2)};
+
+const BOOK_STYLE = ${JSON.stringify(BOOK_STYLE, null, 2)};
+`;
+  }
+
+  // 启动
+  window.addEventListener('load', async () => {
+    // 设置新诗默认日期为今天
+    $('#new-date').value = new Date().toISOString().split('T')[0];
+
+    // 同步本地缓存或远程数据
+    try {
+      await PoemAPI.syncRemoteData();
+    } catch (_) {}
+
+    populateForms();
+    bindEvents();
+    renderPreview();
+  });
+})();
+</script>
+</body>
+</html>

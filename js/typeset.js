@@ -116,6 +116,67 @@ window.Typeset = (function () {
     return pages;
   }
 
+  /* 把卷末跋语（介绍页）编成匀称古雅的宋槧版面，严格防溢出并水平居中 */
+  function buildColophonColumns(info, rows, cols) {
+    const rawLines = Array.isArray(info.colophon)
+      ? info.colophon
+      : String(info.colophon || '').split('\n');
+
+    const cleanLines = rawLines.map((l) => String(l).trim()).filter(Boolean);
+    const maxChars = Math.min(12, rows - 4); // 每列最多12字，确保绝不触及地脚
+
+    const list = [];
+    cleanLines.forEach((line, li) => {
+      const isTitle = li === 0 && (line.endsWith('跋') || line.endsWith('記') || line.endsWith('誌') || line.length <= 6);
+      const isSig = li === cleanLines.length - 1 && (line.includes('識') || line.includes('題') || line.includes('錄') || line.includes('在'));
+
+      if (isTitle) {
+        list.push({
+          chars: line.split(''),
+          size: 0.96,
+          head: true,
+          startRow: 1,
+        });
+      } else if (isSig) {
+        list.push({
+          chars: line.split(''),
+          size: 0.76,
+          sign: true,
+          startRow: Math.max(3, rows - line.length - 4),
+          seal: true,
+        });
+      } else {
+        chunkPoem(line, maxChars).forEach((chunkStr) => {
+          list.push({
+            chars: chunkStr.split(''),
+            size: 0.84,
+            startRow: 2, // 抬头低二格
+          });
+        });
+      }
+    });
+
+    if (!list.some((c) => c.seal)) {
+      const sigStr = '歲在丙午仲秋 墨瀾識。';
+      list.push({
+        chars: sigStr.split(''),
+        size: 0.76,
+        sign: true,
+        startRow: Math.max(3, rows - sigStr.length - 4),
+        seal: true,
+      });
+    }
+
+    // 水平居中分布于 cols 列内
+    const totalCols = list.length;
+    const startCol = Math.max(0, Math.floor((cols - totalCols) / 2));
+    list.forEach((col, idx) => {
+      col.colIndex = Math.min(cols - 1, startCol + idx);
+    });
+
+    return list;
+  }
+
   /* 主入口：返回 { sheets:[{recto,verso}], toc, poemPages, totalSheets } */
   function build(info, poems, mm) {
     const rows = mm.rows, cols = mm.cols;
@@ -168,8 +229,8 @@ window.Typeset = (function () {
     sides.push(...bodyPages);                                       // 正文
     sides.push({
       kind: 'colophon',
-      columns: (info.colophon || []).map((l) => ({ chars: l.split(''), size: 0.86 })),
-      pageLabel: '', seal: { x: 0.2, y: 0.72 },
+      columns: buildColophonColumns(info, rows, cols),
+      pageLabel: '',
     });
     sides.push({ kind: 'blank', pageLabel: '' });                   // 空白护叶
     while (sides.length % 2) sides.push({ kind: 'blank', pageLabel: '' });
@@ -189,5 +250,5 @@ window.Typeset = (function () {
     };
   }
 
-  return { build, cnNum, columnsOfPoem };
+  return { build, cnNum, columnsOfPoem, buildColophonColumns };
 })();

@@ -329,12 +329,13 @@ window.Tex = (function () {
     // ---- 竖排文字 ----
     const inkBase = 34, inkK = 0.86;
     function drawColumn(col, colIndex) {
+      const actualCol = col.colIndex !== undefined ? col.colIndex : colIndex;
       const size = col.size || 1;
       const fsPx = rowH * PPM * 0.80 * size;
       x.font = `${fsPx}px ${col.head ? BOOK_STYLE.fonts.head : font}`;
       x.textAlign = 'center';
       x.textBaseline = 'middle';
-      const colX = colCenter(colIndex);
+      const colX = colCenter(actualCol);
       const chars = col.chars;
       const row0 = col.startRow || 0;
       for (let i = 0; i < chars.length; i++) {
@@ -373,9 +374,11 @@ window.Tex = (function () {
         x.fillStyle = 'rgba(72,58,42,0.78)';
         x.fillText(col.note, colX, (boxT + rowH * (chars.length + (col.year ? 3.4 : 1.2))) * PPM);
       }
-      // 落款钤印（写在落款末尾下方）
+      // 落款钤印（写在落款末尾下方，严格限制在地脚线内）
       if (col.seal) {
-        stamp(colX, (boxT + rowH * (row0 + chars.length + 1.35)) * PPM, rowH * PPM * 1.95, rr(r, -0.035, 0.035));
+        const sealH = rowH * PPM * 1.85;
+        const sealY = Math.min((boxB - rowH * 1.15) * PPM, (boxT + rowH * (row0 + chars.length + 1.25)) * PPM);
+        stamp(colX, sealY, sealH, rr(r, -0.035, 0.035));
       }
     }
     if (page.columns) page.columns.forEach(drawColumn);

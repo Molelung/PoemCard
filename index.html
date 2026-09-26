@@ -268,15 +268,110 @@
   .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, rgba(200,168,106,.35), var(--gold)); transition: width .3s ease; }
   #loader-pct { font-size: 11px; letter-spacing: .22em; color: rgba(232,220,192,.3); }
 
+  /* 手机屏幕边缘轻触翻页指示器 */
+  .screen-edge-tap {
+    position: fixed; top: 48%; transform: translateY(-50%); z-index: 24;
+    width: 44px; height: 110px; display: flex; align-items: center; justify-content: center;
+    color: rgba(200, 168, 106, 0.45); font-size: 36px; font-family: var(--serif);
+    cursor: pointer; user-select: none; transition: all 0.25s ease;
+    background: linear-gradient(to right, rgba(0,0,0,0.32), transparent);
+    border-radius: 0 16px 16px 0;
+  }
+  .screen-edge-tap.right {
+    right: 0; left: auto; border-radius: 16px 0 0 16px;
+    background: linear-gradient(to left, rgba(0,0,0,0.32), transparent);
+  }
+  .screen-edge-tap:active {
+    color: #f6eedb;
+    background: rgba(200, 168, 106, 0.25);
+    transform: translateY(-50%) scale(1.06);
+  }
+  @media (min-width: 861px) {
+    .screen-edge-tap { display: none; }
+  }
+
+  /* 移动端全面优化 */
   @media (max-width: 860px) {
-    #reading-bar { bottom: 16px; padding: 4px 12px; gap: 8px; width: 92vw; justify-content: space-between; }
-    .bar-btn { padding: 4px 6px; font-size: 12px; }
-    .scroll-trigger { padding: 4px 10px; font-size: 12px; }
-    #cur-poem-title { font-size: 12.5px; }
-    #cur-page-info { display: none; }
+    .nav {
+      height: 52px; padding: 0 14px;
+    }
+    .nav-title {
+      font-size: 18px !important; letter-spacing: 0.16em;
+    }
+    .nav-sub { display: none; }
+    .nav-links { gap: 8px; }
+    .nav-links a {
+      font-size: 13.5px; padding: 5px 9px;
+    }
+    .nav-studio-btn {
+      background: linear-gradient(135deg, rgba(111, 164, 148, 0.32), rgba(200, 168, 106, 0.25)) !important;
+      border: 1px solid rgba(111, 164, 148, 0.65) !important;
+      color: #e6f5ef !important;
+      border-radius: 999px !important;
+      padding: 4px 12px !important;
+      font-weight: 500;
+    }
+    @media (max-width: 480px) {
+      .nav-title { font-size: 16px !important; letter-spacing: 0.12em; }
+      .nav-links { gap: 4px; }
+      .nav-links a { font-size: 12.5px; padding: 4px 6px; }
+      .nav-brand-prefix { display: none; }
+      .nav-about-link { display: none; }
+    }
+
+    #reading-bar {
+      bottom: 18px; padding: 8px 14px; gap: 8px; width: 94vw; max-width: 480px;
+      justify-content: space-between; border-radius: 24px;
+      box-shadow: 0 14px 42px rgba(0,0,0,0.82), 0 0 0 1px rgba(200, 168, 106, 0.35);
+    }
+    .bar-btn {
+      padding: 8px 13px; font-size: 14px; min-height: 42px; min-width: 64px;
+      background: rgba(200, 168, 106, 0.14); border: 1px solid rgba(200, 168, 106, 0.28);
+      border-radius: 999px; color: #f7eedb; font-weight: 500;
+    }
+    .bar-btn:active:not(:disabled) {
+      background: rgba(200, 168, 106, 0.32); transform: scale(0.96);
+    }
+    .bar-status {
+      flex-direction: column; gap: 2px; align-items: center; text-align: center;
+    }
+    #cur-poem-title {
+      font-size: 15px; font-weight: bold; color: var(--gold); letter-spacing: 0.1em;
+    }
+    #cur-page-info {
+      display: block; font-size: 11.5px; color: rgba(232, 220, 192, 0.65); letter-spacing: 0.06em;
+    }
     .bar-rule { display: none; }
-    .scroll-body { flex-direction: column; padding: 14px; gap: 16px; }
-    .scroll-calligraphy { min-width: 0; max-height: 40vh; }
+    .bar-divider { display: none; }
+    .scroll-trigger {
+      padding: 7px 12px; font-size: 13px; min-height: 40px; border-radius: 999px;
+    }
+    .tool-btn {
+      padding: 7px 9px; font-size: 12.5px; min-height: 40px;
+      background: rgba(255,255,255,0.06); border-radius: 999px;
+      border: 1px solid rgba(200, 168, 106, 0.20);
+    }
+    #hint {
+      bottom: 84px; font-size: 13.5px; padding: 6px 18px; letter-spacing: 0.18em;
+    }
+
+    /* 画卷弹窗移动端适屏 */
+    .scroll-wrapper {
+      max-width: 96vw; width: 96vw; max-height: 90vh;
+    }
+    .scroll-container {
+      border-left: 8px solid #33261c; border-right: 8px solid #33261c;
+      border-top: 10px solid #241c15; border-bottom: 10px solid #241c15;
+    }
+    .scroll-body {
+      flex-direction: column; padding: 14px; gap: 14px;
+    }
+    .scroll-calligraphy {
+      min-width: 0; max-height: 44vh; padding: 16px 18px;
+    }
+    .calligraphy-inner {
+      font-size: 17px;
+    }
     .scroll-sidebar { min-width: 0; }
   }
 </style>
@@ -303,28 +398,33 @@
     <div class="nav-links">
       <a href="index.html" class="on">诗册</a>
       <a href="poems.html">诗集</a>
-      <a href="poems.html#about">关于</a>
+      <a href="studio.html" class="nav-studio-btn"><span class="nav-brand-prefix">墨瀾</span>诗台</a>
+      <a href="poems.html#about" class="nav-about-link">关于</a>
     </div>
   </nav>
 
   <div id="hint" class="ui"></div>
 
+  <!-- 手机端屏幕边缘轻触翻页指示 -->
+  <div id="tap-prev" class="screen-edge-tap left" title="轻触翻上一叶" aria-label="上一叶"><span>‹</span></div>
+  <div id="tap-next" class="screen-edge-tap right" title="轻触翻下一叶" aria-label="下一叶"><span>›</span></div>
+
   <!-- 底部极简古风阅读控制条 -->
   <div id="reading-bar" class="ui">
-    <button id="btn-prev" class="bar-btn" title="翻上一叶（← / A）">‹ 前叶</button>
+    <button id="btn-prev" class="bar-btn" title="翻上一叶（← / A / 左滑）">‹ 前叶</button>
     <div class="bar-status">
       <span id="cur-poem-title">《旧颜》</span>
       <span class="bar-rule"></span>
       <span id="cur-page-info">第 2 叶 · 清秋月夜</span>
     </div>
-    <button id="btn-next" class="bar-btn" title="翻下一叶（→ / D）">后叶 ›</button>
+    <button id="btn-next" class="bar-btn" title="翻下一叶（→ / D / 右滑）">后叶 ›</button>
     <div class="bar-divider"></div>
     <button id="btn-open-scroll" class="scroll-trigger" title="展开古风画卷鉴赏">
       <span class="scroll-icon">📜</span>
       <span class="scroll-trigger-txt">展卷鉴赏</span>
     </button>
     <div class="bar-tools">
-      <button id="btn-pose" class="tool-btn" title="立起／平放（F）">立册</button>
+      <button id="btn-pose" class="tool-btn" title="立起／平放（F）">伏案</button>
       <button id="btn-sound" class="tool-btn" title="翻页清音开关" aria-pressed="true">清音</button>
     </div>
   </div>
@@ -433,7 +533,11 @@
                 </button>
                 <a href="poems.html" class="setting-chip">
                   <span class="chip-icon">🖼️</span>
-                  <span class="chip-txt">诗集长图</span>
+                  <span class="chip-txt">诗笺总览</span>
+                </a>
+                <a href="studio.html" class="setting-chip" style="border-color: rgba(111,164,148,0.5); background: rgba(111,164,148,0.12);">
+                  <span class="chip-icon">🖋️</span>
+                  <span class="chip-txt" style="color:#dcf2e9;">文心诗台</span>
                 </a>
               </div>
             </div>

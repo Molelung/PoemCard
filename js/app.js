@@ -120,12 +120,15 @@
   const floatGroup = new THREE.Group();        // 悬浮微动（起伏/侧倾）挂这里
   const worldGroup = new THREE.Group();        // 相机环绕的锚点
 
+  const isMobileInitial = isMobile || (typeof window !== 'undefined' && window.innerWidth < 800);
   const view = {
-    az: 0.36, pol: 1.16, zoom: 1,
+    az: isMobileInitial ? 0.08 : 0.36,
+    pol: isMobileInitial ? 1.38 : 1.16,
+    zoom: 1,
     vAz: 0, vPol: 0,                    // 惯性
     pan: new THREE.Vector3(0, 0, 0),    // 画面平移（沿相机右/上方向）
     target: new THREE.Vector3(0, 0, 0),
-    pose: 0, poseT: 0,                  // 0 = 平放，1 = 立起
+    pose: 1, poseT: 1,                  // 0 = 平放，1 = 立起（默认立册）
   };
   const pointer = {
     down: false, mode: null, x0: 0, y0: 0, lx: 0, ly: 0, lt: 0,
@@ -275,7 +278,12 @@
       // 该点要落在视锥内，需要 d ≥ z + |x|/(t·aspect) 且 d ≥ z + |y|/t
       d = Math.max(d, z + Math.abs(x) / (t * asp), z + Math.abs(y) / t);
     }
-    return { d: d * 1.045 + 0.004, center: c };
+    // 手机竖屏时，相机距离自适应微调，让立册填满屏幕宽度约 92%~95%，避免裁切亦不显小
+    const isPortrait = asp < 0.95;
+    const mobileBoost = isPortrait ? 0.92 : (asp < 1.15 ? 0.88 : 1.0);
+    const centerAdjust = c.clone();
+    if (isPortrait) centerAdjust.y += 0.016; // 避开底栏，居中展示
+    return { d: (d * 1.035 + 0.004) * mobileBoost, center: centerAdjust };
   }
   function fitDistance() {
     return fitBox(bookCorners()).d;
@@ -435,6 +443,10 @@
 
     if (ui.btnPrev) ui.btnPrev.addEventListener('click', () => doFlip(-1));
     if (ui.btnNext) ui.btnNext.addEventListener('click', () => doFlip(1));
+    ui.tapPrev = $('#tap-prev');
+    ui.tapNext = $('#tap-next');
+    if (ui.tapPrev) ui.tapPrev.addEventListener('click', () => doFlip(-1));
+    if (ui.tapNext) ui.tapNext.addEventListener('click', () => doFlip(1));
 
     if (ui.btnOpenScroll) ui.btnOpenScroll.addEventListener('click', openScroll);
     if (ui.btnCloseScroll) ui.btnCloseScroll.addEventListener('click', closeScroll);
@@ -465,7 +477,8 @@
     const resetView = () => {
       view.az = 0.36; view.pol = 1.16; view.zoom = 1; view.vAz = view.vPol = 0;
       view.pan.set(0, 0, 0);
-      view.poseT = 0;
+      view.pose = 1; view.poseT = 1;
+      if (book) book.group.rotation.x = 1.44;
       Sfx.page(0.85);
       syncUI();
       lastInteract = performance.now();
@@ -568,6 +581,18 @@
       lastInteract = performance.now();
       Sfx.boot();
       if (Sfx.ctx && Sfx.ctx.state === 'suspended') Sfx.ctx.resume();
+
+      if (e.pointerType === 'touch') {
+        pointer.isTouch = true;
+        pointer.down = true;
+        pointer.x0 = e.clientX; pointer.y0 = e.clientY;
+        pointer.lx = e.clientX; pointer.ly = e.clientY;
+        pointer.lt = performance.now();
+        pointer.moved = 0;
+        return;
+      }
+
+      pointer.isTouch = false;
       try { el.setPointerCapture(e.pointerId); } catch (_) {}
       pointer.down = true;
       pointer.x0 = e.clientX; pointer.y0 = e.clientY;
@@ -601,6 +626,17 @@
       const now = performance.now();
       const dt = Math.max(8, now - pointer.lt) / 1000;
       pointer.lt = now;
+
+      if (e.pointerType === 'touch' || pointer.isTouch) {
+        if (pointer.down) {
+          const dx = e.clientX - pointer.lx, dy = e.clientY - pointer.ly;
+          pointer.lx = e.clientX; pointer.ly = e.clientY;
+          pointer.moved += Math.abs(dx) + Math.abs(dy);
+          if (pointer.moved > 10 && ui.hint) ui.hint.classList.remove('show');
+        }
+        return;
+      }
+
       if (pointer.down) {
         const dx = e.clientX - pointer.lx, dy = e.clientY - pointer.ly;
         pointer.lx = e.clientX; pointer.ly = e.clientY;
@@ -637,11 +673,45 @@
       }
     });
 
-    const endPointer = () => {
+    const endPointer = (e) => {
       if (!pointer.down) return;
       pointer.down = false;
       const now = performance.now();
       lastInteract = now;
+
+      // 移动端专用手势识别（轻滑翻页、轻触翻折，彻底杜绝误转与疯狂抽搐）
+      if (pointer.isTouch || (e && e.pointerType === 'touch')) {
+        const dx = (e ? e.clientX : pointer.lx) - pointer.x0;
+        const dy = (e ? e.clientY : pointer.ly) - pointer.y0;
+        const dt = now - pointer.lt;
+
+        // 1. 横向轻滑：向左滑翻后页，向右滑翻前页
+        if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 1.05) {
+          if (dx < 0) {
+            doFlip(1);
+          } else {
+            doFlip(-1);
+          }
+          return;
+        }
+
+        // 2. 屏幕轻触：触碰屏幕右侧翻后页，触碰左侧翻前页，触碰居中切换姿态
+        if (pointer.moved < 18) {
+          const w = window.innerWidth;
+          const x = e ? e.clientX : pointer.lx;
+          if (x > w * 0.55) {
+            doFlip(1);
+          } else if (x < w * 0.45) {
+            doFlip(-1);
+          } else {
+            view.poseT = view.poseT ? 0 : 1;
+            Sfx.page(0.85);
+            syncUI();
+          }
+        }
+        return;
+      }
+
       if (pointer.mode === 'flip') {
         if (pointer.moved < 9) {
           const it = pointer.item;
@@ -703,34 +773,27 @@
       else if (k === 'r' || k === 'R') {
         view.az = 0.36; view.pol = 1.16; view.zoom = 1; view.vAz = view.vPol = 0;
         view.pan.set(0, 0, 0);
-        view.poseT = 0; syncUI();
+        view.pose = 1; view.poseT = 1;
+        if (book) book.group.rotation.x = 1.44;
+        syncUI();
       }
       else if (k === 'f' || k === 'F') { view.poseT = view.poseT ? 0 : 1; syncUI(); }
     });
 
-    // 双指捏合缩放
+    // 双指捏合缩放（仅当双指接触时触发，绝不与单指滑页冲突）
     let pinch0 = 0;
     const dist2 = (e) => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
     el.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         pinch0 = dist2(e);
-        pointer.pan0 = view.pan.clone();
-        pointer.px0 = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        pointer.py0 = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       }
     }, { passive: true });
     el.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 2) {
+      if (e.touches.length === 2 && pinch0 > 0) {
         const d = dist2(e);
-        if (pinch0 && Math.abs(d - pinch0) > 3) {
+        if (Math.abs(d - pinch0) > 4) {
           view.zoom = clamp(view.zoom * (pinch0 / d), 0.40, 2.8);
           pinch0 = d;
-        } else {
-          const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-          const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-          const scale = (fitDistance() * view.zoom) / renderer.domElement.clientHeight * 1.6;
-          view.pan.x = pointer.pan0.x - (cx - pointer.px0) * scale;
-          view.pan.y = pointer.pan0.y + (cy - pointer.py0) * scale;
         }
         e.preventDefault();
       }
@@ -834,6 +897,7 @@
       makePageTex: (page) => { const t = Tex.tex(page.canvas); page.canvas = null; return t; },
     });
     floatGroup.add(book.group);
+    book.group.rotation.x = view.pose * 1.44;
 
     buildPickList();
     buildUI();
@@ -852,8 +916,11 @@
     await waitFrame();
     renderer.render(scene, camera);
     loader.classList.add('done');
-    setTimeout(() => loader.remove(), 900);
-    setTimeout(() => showHint('展卷鉴赏　·　拖动旋转　·　右键平移　·　滚轮缩放　·　F 姿态切换', 4500), 700);
+    const isMobileDevice = isMobile || window.innerWidth < 800;
+    const hintMsg = isMobileDevice
+      ? '左右轻滑或轻触两侧翻页　·　双指缩放'
+      : '展卷鉴赏　·　拖动旋转　·　右键平移　·　滚轮缩放　·　F 姿态切换';
+    setTimeout(() => showHint(hintMsg, 4500), 700);
 
     window.BookApp = {
       book, camera, renderer, scene, view, get plan() { return plan; },
@@ -912,8 +979,8 @@
     // 立起 / 平放姿态缓动
     if (Math.abs(view.pose - view.poseT) > 1e-4) {
       view.pose += (view.poseT - view.pose) * (1 - Math.exp(-3.4 * dt));
-      book.group.rotation.x = view.pose * 1.44;
     }
+    book.group.rotation.x = view.pose * 1.44;
 
     // 悬浮：缓慢起伏 + 轻微侧倾 + 极慢自转（空闲越久越明显）
     if (CFG.idleFloat) {
