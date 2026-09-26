@@ -130,19 +130,18 @@
   #loader-pct { font-size: 11px; letter-spacing: .22em; color: rgba(232,220,192,.3); }
 
   @media (max-width: 860px) {
-    #plaque { left: 16px; bottom: 96px; max-width: 70vw; }
+    #plaque { left: 16px; bottom: 84px; max-width: 70vw; }
     #plaque-title { font-size: 19px; }
-    #ticks { right: 12px; gap: 5px; }
+    #ticks { right: 10px; gap: 5px; }
     .tick { width: 11px; }
     .tick.on { width: 17px; }
-    #dock { bottom: 22px; gap: 2px; }
-    #dock button { padding: 7px 9px; font-size: 12.5px; letter-spacing: .1em; }
-    #counter { min-width: 92px; font-size: 11px; }
+    #dock { bottom: 16px; gap: 2px; }
+    #dock button { padding: 6px 8px; font-size: 12px; letter-spacing: .1em; }
     #vtitle { display: none; }
-    #corner { right: 16px; bottom: 26px; gap: 13px; }
+    #corner { right: 16px; top: 62px; bottom: auto; gap: 10px; }
     #corner button { font-size: 11.5px; letter-spacing: .16em; }
     #counter { display: none; }
-    #hint { font-size: 11px; letter-spacing: .18em; bottom: 64px; }
+    #hint { font-size: 11px; letter-spacing: .18em; bottom: 58px; }
   }
 </style>
 </head>
@@ -162,8 +161,8 @@
 
   <nav class="nav">
     <div class="nav-brand">
-      <a class="nav-title" id="brand-title" href="index.html">〇〇〇〇〇</a>
-      <div class="nav-sub" id="brand-sub">〇 卷 〇 · 〇〇〇·著</div>
+      <a class="nav-title" id="brand-title" href="index.html">墨瀾詩草</a>
+      <div class="nav-sub" id="brand-sub">甲辰首編 · 墨瀾·著</div>
     </div>
     <div class="nav-links">
       <a href="index.html" class="on">诗册</a>
@@ -173,16 +172,16 @@
   </nav>
 
   <div id="vtitle" class="ui">
-    <span id="vtitle-main">〇〇〇〇〇</span>
+    <span id="vtitle-main">墨瀾詩草</span>
     <span class="rule"></span>
-    <span class="au" id="vtitle-au"></span>
+    <span class="au" id="vtitle-au">墨瀾</span>
   </div>
 
   <div id="ticks" class="ui"></div>
 
   <div id="plaque" class="ui">
-    <div id="plaque-title">〇〇〇〇〇</div>
-    <div id="plaque-sub"></div>
+    <div id="plaque-title">墨瀾詩草</div>
+    <div id="plaque-sub">甲辰首編</div>
   </div>
 
   <div id="hint" class="ui"></div>
@@ -207,7 +206,9 @@
   </div>
 
   <script src="libs/three.min.js"></script>
+  <script src="js/seal_data.js"></script>
   <script src="content.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/textures.js"></script>
   <script src="js/lunar.js"></script>
   <script src="js/typeset.js"></script>

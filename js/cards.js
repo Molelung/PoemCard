@@ -39,8 +39,10 @@ window.PoemCards = (function () {
     const step = (t) => onStep && onStep(t);
     step('研墨…');
     await loadBundledFont();
-    try { state.seal = await loadImage((BOOK_INFO && BOOK_INFO.sealImg) || 'assets/seal.png'); }
-    catch (e) { console.warn(e.message + '（改用内置方印）'); }
+    try {
+      const sealSrc = (typeof window !== 'undefined' && window.SEAL_DATA_URL) || (BOOK_INFO && BOOK_INFO.sealImg) || 'assets/seal.png';
+      state.seal = await loadImage(sealSrc);
+    } catch (e) { console.warn(e.message + '（改用内置方印）'); }
     step('裁纸…');
     const PW = Math.round(LAYOUT.w * LAYOUT.ppm), PH = Math.round(LAYOUT.h * LAYOUT.ppm);
     state.paper = [Tex.paperBase(PW, PH, 12345), Tex.paperBase(PW, PH, 54321)];
@@ -68,10 +70,14 @@ window.PoemCards = (function () {
   function renderPoem(poemIndex, opts) {
     opts = opts || {};
     const ppmScale = opts.ppmScale || 1;
-    if (opts.firstOnly) return renderPage(poemIndex, 0, ppmScale);
-    const mm = Object.assign({}, LAYOUT, { ppm: LAYOUT.ppm * ppmScale });
     const pages = pagesOfPoem(poemIndex);
     if (!pages.length) return null;
+    if (opts.cardCover) {
+      const titleIdx = pages.findIndex((p) => (p.columns || []).some((c) => c.isTitle));
+      return renderPage(poemIndex, titleIdx >= 0 ? titleIdx : 0, ppmScale);
+    }
+    if (opts.firstOnly) return renderPage(poemIndex, 0, ppmScale);
+    const mm = Object.assign({}, LAYOUT, { ppm: LAYOUT.ppm * ppmScale });
     const canvases = pages.map((p) => Tex.renderPage(state.paper[0], state.paper[1], p, mm, { sealImg: state.seal }));
     if (canvases.length === 1) return canvases[0];
     // 多面拼成一长卷

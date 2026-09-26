@@ -150,28 +150,40 @@ window.Tex = (function () {
     return c;
   }
 
-  /* ---------- 由灰度图生成法线贴图（让纤维在光下有起伏） ---------- */
+  /* ---------- 由灰度图生成法线贴图（让纤维在光下有起伏，高性能优化） ---------- */
   function normalFromCanvas(src, strength) {
-    const w = src.width, h = src.height;
+    const maxDim = 384;
+    let w = src.width, h = src.height;
+    if (w > maxDim || h > maxDim) {
+      const scale = maxDim / Math.max(w, h);
+      w = Math.max(64, Math.round(w * scale));
+      h = Math.max(64, Math.round(h * scale));
+    }
     const { c, x } = mkCanvas(w, h);
-    const sctx = src.getContext('2d');
-    const s = sctx.getImageData(0, 0, w, h).data;
+    x.drawImage(src, 0, 0, w, h);
+    const s = x.getImageData(0, 0, w, h).data;
     const out = x.createImageData(w, h);
-    const lum = (i) => (s[i] * 0.299 + s[i + 1] * 0.587 + s[i + 2] * 0.114) / 255;
-    const at = (px, py) => ((py + h) % h) * w * 4 + ((px + w) % w) * 4;
-    const k = strength * 6;
+    const outData = out.data;
+    const k = strength * 0.024;
+
     for (let y = 0; y < h; y++) {
+      const ym = y > 0 ? y - 1 : h - 1;
+      const yp = y < h - 1 ? y + 1 : 0;
+      const yrow = y * w * 4;
+      const ym_row = ym * w * 4;
+      const yp_row = yp * w * 4;
       for (let px = 0; px < w; px++) {
-        const i = y * w * 4 + (px % w) * 4;
-        const l = lum(at(px - 1, y)), rgt = lum(at(px + 1, y));
-        const u = lum(at(px, y - 1)), d = lum(at(px, y + 1));
+        const xm = px > 0 ? px - 1 : w - 1;
+        const xp = px < w - 1 ? px + 1 : 0;
+        const l = s[yrow + xm * 4], rgt = s[yrow + xp * 4];
+        const u = s[ym_row + px * 4], d = s[yp_row + px * 4];
         let nx = (l - rgt) * k, ny = (d - u) * k, nz = 1;
-        const len = Math.hypot(nx, ny, nz);
-        nx /= len; ny /= len; nz /= len;
-        out.data[i] = (nx * 0.5 + 0.5) * 255;
-        out.data[i + 1] = (ny * 0.5 + 0.5) * 255;
-        out.data[i + 2] = (nz * 0.5 + 0.5) * 255;
-        out.data[i + 3] = 255;
+        const inv = 1 / Math.sqrt(nx * nx + ny * ny + 1);
+        const idx = yrow + px * 4;
+        outData[idx] = (nx * inv * 0.5 + 0.5) * 255;
+        outData[idx + 1] = (ny * inv * 0.5 + 0.5) * 255;
+        outData[idx + 2] = (nz * inv * 0.5 + 0.5) * 255;
+        outData[idx + 3] = 255;
       }
     }
     x.putImageData(out, 0, 0);

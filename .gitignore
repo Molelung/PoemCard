@@ -1,5 +1,7 @@
 # 开发用的无头浏览器验收脚本，不需要上传
 _dev/
+.wrangler/
+node_modules/
 # 系统与编辑器杂项
 Thumbs.db
 desktop.ini

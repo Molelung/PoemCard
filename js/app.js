@@ -700,12 +700,21 @@
   async function boot() {
     initRenderer();
     initScene();
-    progress(0.03, '研墨…');
+    progress(0.02, '研墨…');
+
+    // 尝试同步 Cloudflare D1 远程数据库数据（离线自动回退本地）
+    if (window.PoemAPI) {
+      try {
+        await window.PoemAPI.syncRemoteData();
+      } catch (_) {}
+    }
 
     const hasFont = await loadBundledFont();
     let sealImg = null;
-    try { sealImg = await loadImage((BOOK_INFO && BOOK_INFO.sealImg) || 'assets/seal.png'); }
-    catch (e) { console.warn(e.message + '（改用内置方印）'); }
+    try {
+      const sealSrc = (typeof window !== 'undefined' && window.SEAL_DATA_URL) || (BOOK_INFO && BOOK_INFO.sealImg) || 'assets/seal.png';
+      sealImg = await loadImage(sealSrc);
+    } catch (e) { console.warn(e.message + '（改用内置方印）'); }
     progress(0.06, hasFont ? '排字（仲春仿宋）…' : '排字…');
 
     plan = Typeset.build(BOOK_INFO, POEMS, LAYOUT);

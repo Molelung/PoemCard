@@ -85,11 +85,17 @@ window.Typeset = (function () {
   function paginatePoem(list, cols) {
     const pages = [];
     let cur = [];
+    const prefCount = list.filter((c) => c.isPreface).length;
+    // 序言长(>=4列)或全篇超过一页时，小序自成一面；短序与诗同面
+    const splitPreface = prefCount >= 4 || list.length > cols;
+
     for (let i = 0; i < list.length; i++) {
       const col = list[i];
       if (cur.length >= cols) { pages.push(cur); cur = []; }
-      // 小序（note）与诗本身分面：小序自成一面，诗另起一面
-      if (!col.isPreface && cur.length && cur[cur.length - 1].isPreface) { pages.push(cur); cur = []; }
+      // 小序（note）与诗本身分面：长小序自成一面，短小序同面
+      if (splitPreface && !col.isPreface && cur.length && cur[cur.length - 1].isPreface) {
+        pages.push(cur); cur = [];
+      }
       // 落款整组（含钤印）不能拆：这一列放不下就整组挪到下一页
       if (col.sign && !cur.some((c) => c.sign)) {
         const need = list.slice(i).filter((c) => c.sign).length;
