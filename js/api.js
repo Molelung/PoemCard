@@ -10,11 +10,19 @@
   const WORKERS_DEV = 'https://ancient-poetry-api.mokelin-studio.workers.dev';
   const LOCAL_STORAGE_KEY = 'MOLAN_POEM_BOOK_DATA_V1';
 
-  async function fetchWithTimeout(url, opts = {}, timeout = 5000) {
+  async function fetchWithTimeout(url, opts = {}, timeout = 6000) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     try {
-      const res = await fetch(url, { ...opts, signal: controller.signal });
+      const isGet = !opts.method || opts.method.toUpperCase() === 'GET';
+      const sep = url.includes('?') ? '&' : '?';
+      // 核心修复：GET 请求附加唯一时间戳参数，天然避免 CORS 预检阻断，同时 100% 穿透手机端浏览器激进缓存
+      const fetchUrl = isGet ? `${url}${sep}_t=${Date.now()}` : url;
+      const res = await fetch(fetchUrl, {
+        cache: 'no-store',
+        ...opts,
+        signal: controller.signal,
+      });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -27,20 +35,29 @@
   let activeBase = CUSTOM_DOMAIN;
 
   /**
-   * 双轨健壮请求：优先走已绑定的自定义域名 poem.molan.cc.cd，遇异常自动回退 workers.dev
+   * 双轨健壮请求：始终优先走已绑定的自定义域名 poem.molan.cc.cd
+   * 遇偶发网络抖动时对自定义域名进行一次快速重试；仅在极端异常时后备 workers.dev
    */
   async function callApi(path, opts = {}, timeout = 6000) {
     try {
-      const res = await fetchWithTimeout(`${activeBase}${path}`, opts, timeout);
+      const res = await fetchWithTimeout(`${CUSTOM_DOMAIN}${path}`, opts, timeout);
+      activeBase = CUSTOM_DOMAIN;
       return res;
     } catch (e1) {
-      const fallback = activeBase === CUSTOM_DOMAIN ? WORKERS_DEV : CUSTOM_DOMAIN;
+      // 遇突发超时或抖动，先重试一次自定义域名（网络抖动恢复）
       try {
-        const res2 = await fetchWithTimeout(`${fallback}${path}`, opts, timeout);
-        activeBase = fallback;
-        return res2;
-      } catch (e2) {
-        throw new Error(`云端服务请求异常: ${e1.message}`);
+        const retryRes = await fetchWithTimeout(`${CUSTOM_DOMAIN}${path}`, opts, timeout + 1500);
+        activeBase = CUSTOM_DOMAIN;
+        return retryRes;
+      } catch (eRetry) {
+        // 尝试 workers.dev 后备通道
+        try {
+          const res2 = await fetchWithTimeout(`${WORKERS_DEV}${path}`, opts, timeout);
+          activeBase = WORKERS_DEV;
+          return res2;
+        } catch (e2) {
+          throw new Error(`云端服务请求异常: ${e1.message}`);
+        }
       }
     }
   }
@@ -157,7 +174,7 @@
       } catch (_) {}
     },
 
-    /** 启动时同步数据 (优先本地缓存即时更新，随后与云端 D1 数据库合并) */
+    /** 启动与手动同步数据 (优先本地缓存即时更新，随后与云端 D1 数据库合并并持久化至本地) */
     async syncRemoteData() {
       // 1. 先加载本地缓存（0ms 瞬间就绪）
       const local = this.loadLocal();
@@ -171,11 +188,14 @@
         }
       }
 
-      // 2. 尝试与 Cloudflare D1 远程数据库通信
+      // 2. 与 Cloudflare D1 远程数据库通信
       try {
         const [remoteInfo, remotePoems] = await Promise.all([
-          this.getBookInfo().catch(() => null),
-          this.getPoems().catch(() => null),
+          this.getBookInfo().catch((e) => {
+            console.warn('云端装帧配置暂不可达，沿用当前配置：', e.message);
+            return null;
+          }),
+          this.getPoems(),
         ]);
 
         let updated = false;
@@ -199,10 +219,23 @@
           updated = true;
         }
 
-        return { success: true, updated };
+        // 核心修复：远程拉取成功后，必须立即同步写入本地 localStorage，避免手机端刷新后依然是陈旧数据
+        if (typeof BOOK_INFO !== 'undefined' && typeof POEMS !== 'undefined') {
+          this.saveLocal(BOOK_INFO, POEMS);
+        }
+
+        return {
+          success: true,
+          updated,
+          count: (remotePoems && remotePoems.length) || (typeof POEMS !== 'undefined' ? POEMS.length : 0),
+        };
       } catch (err) {
         console.warn('云端同步跳过，使用本地/缓存诗册：', err.message);
-        return { success: false, error: err };
+        return {
+          success: false,
+          error: err,
+          count: typeof POEMS !== 'undefined' ? POEMS.length : 0,
+        };
       }
     },
   };

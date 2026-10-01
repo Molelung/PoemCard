@@ -5,8 +5,7 @@
 @font-face {
   font-family: "Zhongchun Fangsong";
   src: url("../fonts/ZhongchunFangsong-Sub.woff2") format("woff2"),
-       url("../fonts/ZhongchunFangsong-Sub.ttf") format("truetype"),
-       url("../fonts/ZhongchunFangsong-S2T.ttf") format("truetype");
+       url("../fonts/ZhongchunFangsong-Sub.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;

@@ -34,8 +34,10 @@ window.Tex = (function () {
     opt = opt || {};
     const t = new THREE.CanvasTexture(canvas);
     t.anisotropy = maxAniso;
-    t.generateMipmaps = true;
-    t.minFilter = THREE.LinearMipmapLinearFilter;
+    // 关键优化：默认禁用 Mipmap，使用 LinearFilter 直采最高清底图
+    // 彻底根治移动端 GPU 因各向异性能力低、视角倾斜导致采样降级为低分辨率 Mipmap 的「糊成一坨」问题
+    t.generateMipmaps = opt.mipmaps === true;
+    t.minFilter = THREE.LinearFilter;
     t.magFilter = THREE.LinearFilter;
     if (opt.srgb !== false) t.encoding = THREE.sRGBEncoding;
     if (opt.repeat) t.repeat.set(opt.repeat[0], opt.repeat[1]);

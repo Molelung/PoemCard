@@ -817,12 +817,13 @@
       try {
         const res = await PoemAPI.syncRemoteData();
         if (res.success) {
+          activePoemIdx = Math.max(0, POEMS.length - 1);
           populateForms();
           renderPreview();
-          showToast('已从 Cloudflare D1 成功加载最新诗册数据！');
+          showToast(`已从 Cloudflare D1 成功加载最新诗册数据（共 ${res.count} 首）！`);
           updateCloudStatusBadge(true);
         } else {
-          showToast('未能获取云端数据，使用当前本地配置', true);
+          showToast('未能获取云端数据：' + (res.error ? res.error.message : '请检查网络'), true);
           updateCloudStatusBadge(false);
         }
       } catch (e) {
@@ -911,6 +912,7 @@ const BOOK_STYLE = ${JSON.stringify(BOOK_STYLE, null, 2)};
       PoemAPI.checkHealth().then((ok) => updateCloudStatusBadge(ok));
     }
 
+    activePoemIdx = Math.max(0, POEMS.length - 1);
     populateForms();
     bindEvents();
     renderPreview();

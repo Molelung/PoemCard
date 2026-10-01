@@ -15,8 +15,8 @@
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const CFG = {
-    /* 纸页纹理倍率：移动端设为 1.6 确保视网膜屏纤毫毕现，桌面端 1.75 */
-    texScale: isMobile ? 1.6 : 1.75,
+    /* 纸页纹理倍率：提升至 1.85，确保移动端视网膜屏与桌面端均纤毫毕现、锐利如真宣 */
+    texScale: 1.85,
     maxPixelRatio: Math.min(window.devicePixelRatio || 2, 2.5),
     idleFloat: true,
     sound: true,
@@ -95,9 +95,10 @@
     if (BOOK_STYLE && BOOK_STYLE.useBundledFont === false) return false;
     try {
       if (document.fonts && document.fonts.check('16px "Zhongchun Fangsong"')) return true;
-      const face = new FontFace('Zhongchun Fangsong', "url('fonts/ZhongchunFangsong-Sub.woff2') format('woff2'), url('fonts/ZhongchunFangsong-Sub.ttf') format('truetype'), url('fonts/ZhongchunFangsong-S2T.ttf') format('truetype')");
+      const face = new FontFace('Zhongchun Fangsong', "url('fonts/ZhongchunFangsong-Sub.woff2') format('woff2'), url('fonts/ZhongchunFangsong-Sub.ttf') format('truetype')");
       await Promise.race([face.load(), new Promise((_, rej) => setTimeout(() => rej(new Error('超时')), 3500))]);
       document.fonts.add(face);
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
       return true;
     } catch (e) {
       console.warn('自带「仲春仿宋」未加载，退回系统楷体：' + e.message);
@@ -477,6 +478,8 @@
     ui.mBtnReset = $('#m-btn-reset');
     ui.mBtnPose = $('#m-btn-pose');
     ui.mPoseTxt = $('#m-pose-txt');
+    ui.btnSync = $('#btn-sync');
+    ui.mBtnSync = $('#m-btn-sync');
 
     const toggleSound = () => {
       Sfx.on = !Sfx.on;
@@ -539,11 +542,31 @@
       lastInteract = performance.now();
     };
 
+    const triggerSync = async () => {
+      showHint('正在从 Cloudflare D1 同步最新诗作…', 2500);
+      try {
+        if (!window.PoemAPI) throw new Error('API 组件未就绪');
+        const res = await window.PoemAPI.syncRemoteData();
+        if (res && res.success) {
+          showHint(`已同步最新诗卷（共 ${res.count} 首）`, 2500);
+          if (res.updated) {
+            setTimeout(() => location.reload(), 600);
+          }
+        } else {
+          showHint('云端同步受限，维持当前卷册', 2200);
+        }
+      } catch (err) {
+        showHint('同步异常：' + err.message, 2500);
+      }
+    };
+
     if (ui.btnSound) ui.btnSound.addEventListener('click', toggleSound);
     if (ui.btnPose) ui.btnPose.addEventListener('click', togglePose);
     if (ui.btnReset) ui.btnReset.addEventListener('click', () => resetView(true));
     if (ui.mBtnReset) ui.mBtnReset.addEventListener('click', () => resetView(true));
     if (ui.mBtnPose) ui.mBtnPose.addEventListener('click', togglePose);
+    if (ui.btnSync) ui.btnSync.addEventListener('click', triggerSync);
+    if (ui.mBtnSync) ui.mBtnSync.addEventListener('click', triggerSync);
 
     window._appResetView = resetView;
     window._appTogglePose = togglePose;
@@ -914,7 +937,8 @@
     initScene();
     progress(0.04, '研墨…');
 
-    // 1. 本地缓存/基底即时加载，耗时 0ms，无需等待网络
+    // 1. 本地缓存/基底即时预加载，耗时 0ms
+    let syncPromise = null;
     if (window.PoemAPI) {
       const local = window.PoemAPI.loadLocal();
       if (local) {
@@ -924,13 +948,28 @@
           local.poems.forEach((p) => POEMS.push(p));
         }
       }
-      // 尝试与云端快速同步 (1.2s 超时防阻断，若云端有更新则在此期间直接加载最新的诗)
+      // 与 Cloudflare D1 数据库快速建连并同步 (给予 3.5s 充足时间供移动端 4G/5G 网络握手)
+      progress(0.05, '同步云端诗册…');
+      syncPromise = window.PoemAPI.syncRemoteData();
       try {
         await Promise.race([
-          window.PoemAPI.syncRemoteData(),
-          new Promise((r) => setTimeout(r, 1200))
+          syncPromise,
+          new Promise((r) => setTimeout(r, 3500))
         ]);
       } catch (_) {}
+    }
+
+    if (syncPromise) {
+      syncPromise.then((res) => {
+        if (res && res.updated && book) {
+          showHint(`云端诗册有更新（共 ${res.count} 首）· 点击重载`, 6000);
+          const h = $('#hint');
+          if (h) {
+            h.style.cursor = 'pointer';
+            h.onclick = () => location.reload();
+          }
+        }
+      }).catch(() => {});
     }
 
     const hasFont = await loadBundledFont();
